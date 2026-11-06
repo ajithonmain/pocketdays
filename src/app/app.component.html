@@ -1,8 +1,8 @@
 <div class="app-shell">
   <div class="screen">
-  @if(update.available()){<div class="update" role="status">A new version is ready.<button (click)="update.reload()">Update</button></div>}
   <main id="main"><router-outlet/></main>
   </div>
+  @if(update.available()&&!update.dismissed()){<div class="update" role="status"><span>New version ready</span><span class="update-actions"><button type="button" (click)="update.later()">Later</button><button type="button" class="update-now" (click)="update.reload()">Update</button></span></div>}
   <nav aria-label="Main navigation">
     <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}" aria-label="Calendar"><app-icon name="calendar"/><span>Calendar</span></a>
     <a routerLink="/stores" routerLinkActive="active" aria-label="Stores"><app-icon name="stores"/><span>Stores</span></a>

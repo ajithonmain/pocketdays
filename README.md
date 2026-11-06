@@ -14,7 +14,8 @@ No accounts, no ads, no analytics, no third-party fonts, no trackers.
 - Stores page: totals and visits per store for a month, year or all time, with search, sorting, paid-by and person filters, and a per-store order list.
 - Automatic, unique store colors generated from the store name.
 - Light, Dark and System themes.
-- Works offline; saves locally first. Optional private-link sync between your devices.
+- Works offline; saves locally first. Optional sync between your devices with a short one-time code or a private link.
+- Settings shows the installed version and release time, offers install, and a strip above the bottom bar appears when a new version is ready.
 - Backup and restore to a JSON file from Settings.
 - Installable web app (PWA) when served over HTTPS.
 
@@ -50,7 +51,7 @@ Before you put it on a public URL, read the notes on abuse and access in [docs/S
 ## How your data is handled
 
 - Entries are saved in your browser (IndexedDB) first.
-- Sync is optional and uses a private link. First open creates a random 256-bit key on the device. Settings can copy a link that carries the key in the URL fragment; opening it on another device connects it to the same diary and the fragment is removed from the address bar.
+- Sync is optional. First open creates a random 256-bit key on the device. To use the same diary on another device, Settings > Link a device shows a code like `K7M2-9QXA`; type it in Settings > Have a code on the other device. The code works once and expires after 10 minutes. The device encrypts its key with the code in the browser, so the server only ever stores an encrypted blob under a hash of the code. Settings can also copy a link that carries the key in the URL fragment; opening it on another device connects it to the same diary and the fragment is removed from the address bar.
 - The key is sent only as a bearer header to your own deployment's API. The database stores a SHA-256 hash of the key, never the key. Anyone who has the link can read and change the diary, and there is no account recovery.
 - Backups are plain JSON files of your diary. They do not contain the private link.
 
@@ -72,3 +73,5 @@ Issues and pull requests are welcome. Read [CONTRIBUTING.md](./CONTRIBUTING.md) 
 
 PocketDays is released under the [MIT License](./LICENSE). Dependency licenses are listed in [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md), and data handling is described in [PRIVACY.md](./PRIVACY.md). Community rules are in [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md).
 
+
+App branding includes PNG/ICO favicons, Apple touch icons, maskable Android icons and iOS startup images derived from the approved PocketDays logo. Physical-device launch appearance remains unverified.

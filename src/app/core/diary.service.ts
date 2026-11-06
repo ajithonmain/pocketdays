@@ -4,6 +4,7 @@ import { DiaryDocument, emptyDiary, SyncEnvelope } from './models';
 import { applyDay, EntryDraft } from './entries';
 import { addCatalogItem, CatalogKind, removeCatalogItem } from './catalog';
 import { mergeDiary } from './merge';
+import { generatePairCode, openDiaryKey, pairingId, sealDiaryKey } from './pairing';
 interface LocalRecord { data:DiaryDocument; revision:number; dirty:boolean; base?:DiaryDocument; }
 @Injectable({providedIn:'root'})
 export class DiaryService {
@@ -96,6 +97,32 @@ export class DiaryService {
   }
   async resolveConflict(useLocal:boolean){
     try{await this.lock(async()=>{await this.load();const remote=await this.request('GET');if(useLocal){this.revision=remote.revision;const saved=await this.request('PUT');this.data.set(saved.data);this.revision=saved.revision;}else{this.data.set(remote.data);this.revision=remote.revision;}this.base=structuredClone(this.data());this.pending.set(false);this.conflict.set(false);await this.persist();this.error.set('');this.status.set('Up to date');});}catch{this.error.set('Could not resolve it. Retry when connected.');}
+  }
+  /** Creates a one-time code another device can type to join this diary. The server only stores the encrypted key. */
+  async createPairCode():Promise<{code:string;expiresAt:number}>{
+    if(!this.ready())throw new Error('Diary is still opening.');
+    if(!this.online())throw new Error('Connect to the internet to get a code.');
+    await this.sync();
+    if(this.status()!=='Up to date')throw new Error('Cloud sync is not ready. Try again in a moment.');
+    // The API only creates a cloud row on the first write, so an untouched diary is written once before it can be linked.
+    await this.lock(async()=>{await this.load();if(this.revision===0&&!this.pending()){const saved=await this.request('PUT');this.revision=saved.revision;this.data.set(saved.data);this.base=structuredClone(saved.data);await this.persist();}});
+    const code=generatePairCode();const sealed=await sealDiaryKey(code,this.key);
+    const res=await fetch('/api/pair',{method:'PUT',signal:AbortSignal.timeout(10000),headers:{Authorization:`Bearer ${this.key}`,'Content-Type':'application/json'},body:JSON.stringify(sealed)});
+    if(!res.ok)throw new Error('Could not create a code. Try again.');
+    const {expiresAt}=await res.json() as {expiresAt:number};return {code,expiresAt:expiresAt*1000};
+  }
+  /** Looks up and consumes a code. Returns the diary key it carries; nothing changes on this device yet. */
+  async claimPairCode(input:string):Promise<string>{
+    const id=await pairingId(input);
+    const res=await fetch('/api/pair',{method:'POST',signal:AbortSignal.timeout(10000),headers:{'Content-Type':'application/json'},body:JSON.stringify({id})});
+    if(res.status===404)throw new Error('That code did not work or has expired.');
+    if(!res.ok)throw new Error('Could not reach sync. Try again.');
+    const {payload}=await res.json() as {payload:string};return openDiaryKey(input,payload);
+  }
+  /** Switches this device to another diary key and reloads. Local data under the old key stays in this browser but is no longer shown. */
+  joinDiary(key:string){
+    if(!/^[a-f0-9]{64}$/.test(key))throw new Error('Invalid diary key.');
+    localStorage.setItem('pocketdays-key',key);location.reload();
   }
   async copyLink(){try{await navigator.clipboard.writeText(`${location.origin}/#diary=${this.key}`);return true;}catch{return false;}}
 }

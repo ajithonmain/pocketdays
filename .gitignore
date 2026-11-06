@@ -25,3 +25,5 @@ docs/STATUS.md
 docs/TESTING.md
 docs/WORK_LOG.md
 docs/references/
+# Generated at build time
+src/app/core/build-info.ts

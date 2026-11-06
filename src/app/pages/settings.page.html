@@ -12,9 +12,23 @@
 <section class="group"><h2 class="group-label">Sync</h2>
   <div class="panel list-panel">
     <div class="row"><span class="row-main"><strong>{{diary.status()}}</strong>@if(diary.error()){<small role="status">{{diary.error()}}</small>}</span><button class="pill-button" (click)="diary.sync()" [disabled]="!diary.ready()">Sync now</button></div>
+    <div class="row"><span class="row-main"><strong>Link a device</strong><small>Get a code to type on another device</small></span><button class="pill-button" (click)="showCode()" [disabled]="!diary.ready()">Get code</button></div>
+    <div class="row"><span class="row-main"><strong>Have a code?</strong><small>Connect this device to a diary</small></span><button class="pill-button" (click)="enterCode()">Enter</button></div>
     <div class="row"><span class="row-main"><strong>Private link</strong><small>Opens this diary on another device. Keep it private.</small></span><button class="pill-button" (click)="copy()" [disabled]="!diary.ready()">Copy</button></div>
   </div>
   @if(message()){<p class="group-note" role="status">{{message()}}</p>}
+</section>
+
+<section class="group"><h2 class="group-label">App</h2>
+  <div class="panel list-panel">
+    <div class="row"><span class="row-main"><strong>Install</strong>@switch(installer.state()){
+      @case('installed'){<small>Installed on this device</small>}
+      @case('ready'){<small>Add PocketDays to your home screen</small>}
+      @case('ios'){<small>Tap Share, then Add to Home Screen</small>}
+      @default{<small>Use your browser menu and choose Install app</small>}
+    }</span>@if(installer.state()==='ready'){<button class="pill-button" (click)="install()">Install</button>}@else if(installer.state()==='installed'){<span class="row-value">Done</span>}</div>
+    <div class="row"><span class="row-main"><strong>Version {{updater.info.version}}</strong><small>Released {{released()}}@if(updater.info.commit){ · {{updater.info.commit}}}</small>@if(updater.checkResult()){<small role="status">{{updater.checkResult()}}</small>}</span><button class="pill-button" (click)="updater.check()" [disabled]="updater.checking()">Check</button></div>
+  </div>
 </section>
 
 @if(diary.conflict()){<section class="group"><h2 class="group-label">Sync conflict</h2><div class="panel"><p class="muted">Keep one copy. Back up first if you need both.</p><div class="button-row"><button class="pill-button" (click)="resolve(true)">Keep this device</button><button class="pill-button" (click)="resolve(false)">Use cloud copy</button></div></div></section>}
@@ -33,5 +47,31 @@
   <p-drawer [visible]="true" (visibleChange)="!$event && close()" position="bottom" styleClass="day-drawer" [modal]="true" [blockScroll]="false" [showCloseIcon]="false" [style]="{height:'auto', maxHeight:'85dvh'}" transitionOptions="0ms">
     <ng-template #header><div class="drawer-heading"><span class="drag-handle"></span><div class="drawer-row"><h3 class="sheet-title">{{kind==='stores' ? 'Stores' : 'People'}}</h3><button class="icon-button" aria-label="Close" (click)="close()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="m4 4 8 8m0-8-8 8"/></svg></button></div></div></ng-template>
     <div class="filter-sheet"><app-catalog-settings [kind]="kind"/></div>
+  </p-drawer>
+}
+
+@if(linking(); as mode){
+  <p-drawer [visible]="true" (visibleChange)="!$event && closeLink()" position="bottom" styleClass="day-drawer" [modal]="true" [blockScroll]="false" [showCloseIcon]="false" [style]="{height:'auto', maxHeight:'85dvh'}" transitionOptions="0ms">
+    <ng-template #header><div class="drawer-heading"><span class="drag-handle"></span><div class="drawer-row"><h3 class="sheet-title">{{mode==='show' ? 'Link a device' : 'Enter code'}}</h3><button class="icon-button" aria-label="Close" (click)="closeLink()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="m4 4 8 8m0-8-8 8"/></svg></button></div></div></ng-template>
+    <div class="filter-sheet pair-sheet">
+      @if(mode==='show'){
+        @if(pairCode()){
+          <p class="pair-code" aria-label="Your code" role="status">{{pairCode()}}</p>
+          <p class="field-hint">On the other device open Settings, Enter, and type this code. It works once and expires in {{pairMinutes}} minutes.</p>
+        }@else if(pairBusy()){
+          <p class="muted pair-wait" role="status">Creating code</p>
+        }
+        @if(pairError()){<p class="field-error" role="alert">{{pairError()}}</p>}
+        @if(!pairBusy()&&!pairCode()){<button class="primary" (click)="showCode()">Try again</button>}
+      }@else{
+        <form class="pair-form" (submit)="$event.preventDefault();connect()">
+          <label class="sr-only" for="pair-code-input">Link code</label>
+          <input id="pair-code-input" class="pair-input" name="code" [value]="codeInput()" (input)="formatCode($event)" placeholder="XXXX-XXXX" maxlength="9" autocomplete="off" autocapitalize="characters" spellcheck="false" inputmode="text" [disabled]="pairBusy()" [attr.aria-describedby]="pairError()?'pair-error':null">
+          <button type="submit" class="primary" [disabled]="pairBusy()||codeInput().length<9">Connect</button>
+        </form>
+        <p class="field-hint">Get the code from Settings on the device that already has your diary.</p>
+        @if(pairError()){<p class="field-error" id="pair-error" role="alert">{{pairError()}}</p>}
+      }
+    </div>
   </p-drawer>
 }

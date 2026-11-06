@@ -14,6 +14,8 @@ Expense entries (store, amount, note, who paid, people who were with you), your 
 
 ## Sync and the private link
 
+Device codes: when you link another device with a short code, the first device encrypts its key with the code in the browser and uploads only an encrypted blob under a hash of the code. The host cannot read the key from that blob without guessing the code. The blob is deleted when the second device uses it or after 10 minutes.
+
 A random 256-bit key is created on first open and kept in the browser. It is sent as a bearer header only to the same origin's `/api/diary` endpoint. The database stores a SHA-256 hash of the key, not the key. Anyone who holds the private link can read and change that diary. There is no account recovery.
 
 ## What the host can see

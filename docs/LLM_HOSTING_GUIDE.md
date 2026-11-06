@@ -18,7 +18,7 @@ This file is written for AI assistants (and the people reading along). Use it to
 | --- | --- | --- | --- |
 | Static app (Angular build) | Pages | Yes | Output folder `dist/pocketdays/browser` |
 | Sync API `functions/api/diary.ts` | Pages Functions (runs as a Worker) | Yes, counts toward the Workers free request quota | Only needed for sync |
-| Storage | D1 (SQLite) | Yes, within free storage and daily read and write quotas | One table, `diaries`, from `schema.sql` |
+| Storage | D1 (SQLite) | Yes, within free storage and daily read and write quotas | Two tables, `diaries` and `pairings`, from `schema.sql` |
 
 A personal diary is far below free quotas. Offer the user two modes and let them pick:
 
@@ -132,9 +132,10 @@ Expected: `401` with `{"error":"Private diary link required"}` and `Cache-Contro
 | Symptom | Likely cause | Fix |
 | --- | --- | --- |
 | Sync says unavailable on the deployed site | Deployed with drag-and-drop, so no Function | Redeploy with `wrangler pages deploy` or Git integration |
-| `/api/diary` returns 404 or HTML | `functions/` not included | Deploy from the repository root with Wrangler, or use Git integration |
+| `/api/diary` or `/api/pair` returns 404 or HTML | `functions/` not included | Deploy from the repository root with Wrangler, or use Git integration |
 | `/api/diary` returns 500 | D1 binding missing or not named `DB`, or table not created | Check Bindings; rerun step 4 with `--remote`; redeploy |
-| `no such table: diaries` | Schema applied only locally | Run step 4 with `--remote` |
+| `no such table: diaries` or `no such table: pairings` | Schema applied only locally, or an older deployment missing the pairings table | Run step 4 with `--remote` (safe to repeat) |
+| Link a device says it could not create a code | `pairings` table missing, or sync not working | Rerun step 4 with `--remote`, then check Sync in Settings |
 | Build fails on Node version | Cloudflare used an older Node | Set `NODE_VERSION=22` and redeploy |
 | `database_id` errors during deploy | Placeholder still in `wrangler.toml` | Complete step 3 |
 | Deep links such as `/stores` 404 on refresh | A custom `404.html` or redirect rule is interfering | Remove it; Pages serves `index.html` for unknown paths when there is no `404.html`. Do not add a `/* /index.html 200` rule, which Cloudflare flags as a loop |
@@ -184,8 +185,8 @@ Only on explicit request: delete the Pages project in the dashboard, then `npx w
 | Output directory | `dist/pocketdays/browser` |
 | D1 binding name | `DB` |
 | Database name | `pocketdays` |
-| Schema file | `schema.sql` |
-| API route | `/api/diary` (GET, PUT; bearer key header) |
+| Schema file | `schema.sql` (tables `diaries`, `pairings`) |
+| API routes | `/api/diary` (GET, PUT; bearer key header), `/api/pair` (PUT with bearer key, POST to claim a one-time device code) |
 | Placeholder to replace | `REPLACE_WITH_D1_DATABASE_ID` in `wrangler.toml` |
 
 ## Honest status to relay

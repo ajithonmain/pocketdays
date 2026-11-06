@@ -33,7 +33,7 @@ Requirements: a Cloudflare account, Node 22.18 or newer, and your fork of this r
 
 3. Put that ID in `wrangler.toml` in your fork (replace `REPLACE_WITH_D1_DATABASE_ID`). A D1 database ID identifies your database but is not a password; still, keep it in your own fork and do not reuse someone else's.
 
-4. Create the table.
+4. Create the tables (`diaries` and the short-lived `pairings` table used by device codes). The file is safe to run again, so run it after updating an existing deployment too.
 
    ```sh
    npx wrangler d1 execute pocketdays --remote --file=schema.sql
@@ -106,3 +106,7 @@ Settings has Back up (downloads a JSON file) and Restore (replaces the diary on 
 ## Known limits
 
 Live sync on a real deployment, installation on physical devices and Lighthouse scores have not been verified by the maintainers. There is no multi-user sharing, no key rotation and no account recovery; losing the private link and the browser storage on every device means losing access to the cloud copy.
+
+## Regenerating app branding
+
+The approved logo source is output/branding/pocketdays-logo.png. With Pillow installed in your authoring environment, run `python3 scripts/generate-brand-assets.py` from the checkout to regenerate the PNG/ICO icons and iOS startup assets. Manifest entries and icon metadata live in public/manifest.webmanifest and src/index.html. After deploying branding changes, test a fresh home-screen install; existing installs may retain cached icons. Actual device splash behavior is not yet verified.

@@ -11,7 +11,19 @@
           "/*.css",
           "/*.js",
           "/manifest.webmanifest",
-          "/icons/**"
+          "/icons/**",
+          "/favicon.ico",
+          "/apple-touch-icon.png"
+        ]
+      }
+    },
+    {
+      "name": "startup-images",
+      "installMode": "lazy",
+      "updateMode": "lazy",
+      "resources": {
+        "files": [
+          "/splash/**"
         ]
       }
     }

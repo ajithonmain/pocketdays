@@ -11,6 +11,7 @@ Please do not report security problems in a public issue. Use GitHub's private v
 - The private link carries the key in the URL fragment, which browsers do not send to servers. The app removes it from the address bar after import.
 - API responses are sent with `Cache-Control: no-store`, and the service worker does not cache API routes.
 - Writes use a revision compare-and-swap so stale devices cannot silently overwrite newer data.
+- Linking a device with a short code: the code (40 bits) never leaves the browser. A lookup id and an AES-GCM key are derived from it with PBKDF2, the diary key is encrypted in the browser, and the server stores only the id and ciphertext for 10 minutes, one per diary, deleted on first claim. Guessing a live code online is impractical at this size and lifetime; the host could in theory try codes offline against a stored blob, which costs 200,000 PBKDF2 rounds per guess, and the host can already read the diary data.
 - Backups are plain JSON files and never include the key. Restoring a file validates and rebuilds the data instead of trusting it.
 
 ## Known limits

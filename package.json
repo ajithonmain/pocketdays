@@ -17,8 +17,11 @@
     "node": ">=22.18"
   },
   "scripts": {
+    "prestart": "node scripts/build-info.mjs",
     "start": "ng serve --host 0.0.0.0",
+    "prebuild": "node scripts/build-info.mjs",
     "build": "ng build",
+    "precheck": "node scripts/build-info.mjs",
     "check": "tsc --noEmit -p tsconfig.app.json",
     "test": "node --test tests/*.test.mjs"
   },
