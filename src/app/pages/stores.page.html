@@ -1,0 +1,74 @@
+<header class="screen-head stores-head">
+  <div class="period-nav">
+    <button class="icon-button previous" aria-label="Previous" [disabled]="period()==='all'" (click)="step(-1)"><app-icon name="arrow"/></button>
+    <strong [attr.aria-label]="isMonth() ? (anchor() | date:'MMMM yyyy') : null">{{isMonth() ? (anchor() | date:'MMM yyyy') : navLabel()}}</strong>
+    <button class="icon-button" aria-label="Next" [disabled]="period()==='all'" (click)="step(1)"><app-icon name="arrow"/></button>
+  </div>
+  <div class="head-actions">
+    <button class="round-button" [class.active]="searching()" aria-label="Search stores" (click)="toggleSearch()"><app-icon name="search"/></button>
+    <button class="round-button" aria-label="Filters" (click)="openSheet()"><app-icon name="filter"/>@if(customised()){<i class="filter-dot" aria-hidden="true"></i>}</button>
+  </div>
+</header>
+
+@if(searching()){
+  <label class="search-field"><span class="sr-only">Search stores</span>
+    <app-icon name="search"/>
+    <input type="search" placeholder="Search stores" autocomplete="off" [value]="query()" (input)="setQuery($event)" #q>
+  </label>
+}
+<div class="stores-summary" aria-live="polite">
+  <strong>{{summary().total | currency:diary.data().settings.currency:'symbol':'1.0-2'}}</strong>
+  <span>{{summary().visits === 1 ? '1 visit' : summary().visits + ' visits'}}{{filtered() ? ' · filtered' : ''}}</span>
+</div>
+
+@if(rows().length){
+  <div class="panel list-panel">
+    @for(row of rows(); track row.id; let i=$index){
+      <button class="row row-button" [style.--i]="i" (click)="openDetail(row.id)" [attr.aria-label]="row.name + ', ' + row.visits + (row.visits === 1 ? ' visit' : ' visits') + ', view orders'">
+        <span class="entry-avatar" [style.background-color]="row.color" aria-hidden="true">{{row.name.charAt(0).toUpperCase()}}</span>
+        <span class="row-main"><strong>{{row.name}}</strong><small>{{row.visits === 1 ? '1 visit' : row.visits + ' visits'}} · last {{lastDate(row.last) | date:'d MMM'}}</small></span>
+        <span class="row-amount">{{row.total | currency:diary.data().settings.currency:'symbol':'1.0-2'}}</span>
+      </button>
+    }
+  </div>
+} @else {
+  <p class="calendar-note">{{emptyText()}}</p>
+}
+
+@if(sheet()){
+  <p-drawer [visible]="true" (visibleChange)="!$event && closeSheet()" position="bottom" styleClass="day-drawer" [modal]="true" [blockScroll]="false" [showCloseIcon]="false" [style]="{height:'auto'}" transitionOptions="0ms">
+    <ng-template #header><div class="drawer-heading"><span class="drag-handle"></span><div class="drawer-row"><h3 class="sheet-title">Filters</h3><button class="icon-button" aria-label="Close filters" (click)="closeSheet()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="m4 4 8 8m0-8-8 8"/></svg></button></div></div></ng-template>
+    <div class="filter-sheet">
+      <p class="group-label">Range</p>
+      <div class="segmented" style="--n:3" [style.--i]="periodIndex()" role="group" aria-label="Range">@for(p of periods; track p.id){<button [attr.aria-pressed]="period()===p.id" (click)="setPeriod(p.id)">{{p.label}}</button>}</div>
+      <p class="group-label">Paid by</p>
+      <div class="segmented" style="--n:3" [style.--i]="payerIndex()" role="group" aria-label="Paid by">@for(p of payers; track p.id){<button [attr.aria-pressed]="payer()===p.id" (click)="payer.set(p.id)">{{p.label}}</button>}</div>
+      <p class="group-label">Person</p>
+      <div class="chip-wrap" role="group" aria-label="Person"><button class="filter-chip" [attr.aria-pressed]="person()===''" (click)="person.set('')">Anyone</button>@for(name of people(); track name){<button class="filter-chip" [attr.aria-pressed]="person()===name" (click)="person.set(name)">{{name}}</button>}</div>
+      <p class="group-label">Sort by</p>
+      <div class="panel list-panel option-list" role="radiogroup" aria-label="Sort by">@for(s of sorts; track s.id){<button class="option-row" role="radio" [attr.aria-checked]="sort()===s.id" (click)="sort.set(s.id)">{{s.label}}@if(sort()===s.id){<app-icon name="check"/>}</button>}</div>
+    </div>
+    <ng-template #footer><div class="sheet-actions"><button class="text-button" (click)="reset()">Reset</button><button class="primary" (click)="closeSheet()">Done</button></div></ng-template>
+  </p-drawer>
+}
+
+@if(detailKey() && detail(); as d){
+  <p-drawer [visible]="true" (visibleChange)="!$event && closeDetail()" position="bottom" styleClass="day-drawer" [modal]="true" [blockScroll]="false" [showCloseIcon]="false" [style]="{height:'auto', maxHeight:'85dvh'}" transitionOptions="0ms">
+    <ng-template #header><div class="drawer-heading"><span class="drag-handle"></span><div class="drawer-row"><div class="detail-head"><span class="entry-avatar" [style.background-color]="d.color" aria-hidden="true">{{d.name.charAt(0).toUpperCase()}}</span><div><h3 class="sheet-title">{{d.name}}</h3><p class="detail-sub">{{periodText()}}{{payer() !== 'all' ? ' · ' + (payer() === 'me' ? 'paid by me' : 'paid by others') : ''}}{{person() ? ' · ' + person() : ''}}</p></div></div><button class="icon-button" aria-label="Close" (click)="closeDetail()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="m4 4 8 8m0-8-8 8"/></svg></button></div></div></ng-template>
+    <div class="filter-sheet">
+      <div class="detail-total"><strong>{{d.total | currency:diary.data().settings.currency:'symbol':'1.0-2'}}</strong><span>{{orders().length === 1 ? '1 order' : orders().length + ' orders'}}</span></div>
+      <div class="panel list-panel">
+        @for(o of orders(); track o.id; let i=$index){
+          <div class="row order-row" [style.--i]="i">
+            <span class="row-main">
+              <strong>{{lastDate(o.date) | date:'EEE, d MMM'}}</strong>
+              @if(o.items){<small class="order-note">{{o.items}}</small>}
+              <span class="mini-pills"><i class="mini-pill payer">{{o.paidByMe ? 'Paid by me' : 'Paid by ' + o.payer}}</i>@for(person of o.people; track person){<i class="mini-pill">{{person}}</i>}</span>
+            </span>
+            <span class="row-amount">{{o.amount | currency:diary.data().settings.currency:'symbol':'1.0-2'}}</span>
+          </div>
+        }
+      </div>
+    </div>
+  </p-drawer>
+}

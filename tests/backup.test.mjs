@@ -1,0 +1,28 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { loadSource } from './load-source.mjs';
+const {createBackup,parseBackup,backupFileName,summarize}=await loadSource('backup');
+const entry=(o={})=>({id:'e1',storeId:'s1',storeName:'Zepto',items:'Milk',amount:12.345,paidByMe:true,paidByName:null,iOweThem:false,personIds:['p1'],personNames:['Asha'],createdAt:'2026-11-07T10:00:00Z',updatedAt:'2026-11-07T10:00:00Z',storeColor:'#583bb0',...o});
+const diary=()=>({schemaVersion:1,stores:[{id:'s1',name:'Zepto',createdAt:'x',color:'#583bb0'}],people:[{id:'p1',name:'Asha',createdAt:'x'}],days:[{date:'2026-11-07',total:0,entryCount:0,updatedAt:'u',entries:[entry()]}],settings:{currency:'INR',weekStart:'monday',showDailyTotals:false}});
+const text=(o)=>JSON.stringify(o);
+test('a backup round-trips and totals are recomputed',()=>{const file=createBackup(diary(),new Date('2026-11-07T10:00:00Z'));const {diary:out,summary}=parseBackup(text(file));assert.equal(out.days[0].entryCount,1);assert.equal(out.days[0].total,12.35);assert.equal(out.days[0].entries[0].amount,12.35);assert.deepEqual([summary.days,summary.entries,summary.stores,summary.people],[1,1,1,1]);assert.equal(summary.exportedAt,'2026-11-07T10:00:00.000Z');assert.match(backupFileName(new Date(2026,10,7)),/^pocketdays-backup-2026-11-07\.json$/);});
+test('a backup never carries the private link key and unknown fields are dropped',()=>{const file=createBackup(diary());assert.deepEqual(Object.keys(file).sort(),['app','diary','exportedAt','kind','version']);const dirty=JSON.parse(text(file));dirty.diary.key='secret';dirty.diary.days[0].entries[0].evil='x';dirty.diary.stores[0].extra=1;const {diary:out}=parseBackup(text(dirty));assert.equal('key' in out,false);assert.equal('evil' in out.days[0].entries[0],false);assert.equal('extra' in out.stores[0],false);});
+test('malformed or hostile files are rejected with a plain message',()=>{
+  const ok=()=>JSON.parse(text(createBackup(diary())));
+  const bad=(mutate,pattern)=>{const f=ok();mutate(f);assert.throws(()=>parseBackup(text(f)),pattern);};
+  assert.throws(()=>parseBackup('not json'),/Not a PocketDays backup/);
+  assert.throws(()=>parseBackup('[]'),/Not a PocketDays backup/);
+  bad(f=>{f.app='Other';},/Not a PocketDays backup/);
+  bad(f=>{f.version=2;},/newer version/);
+  bad(f=>{f.diary.schemaVersion=2;},/Unsupported/);
+  bad(f=>{f.diary.days[0].entries[0].amount=-5;},/invalid amount/);
+  bad(f=>{f.diary.days[0].entries[0].amount='12';},/invalid amount/);
+  bad(f=>{f.diary.days[0].date='2026-13-40';},/not valid/);
+  bad(f=>{f.diary.days.push(JSON.parse(JSON.stringify(f.diary.days[0])));},/twice/);
+  bad(f=>{f.diary.stores[0].name='x'.repeat(81);},/too long/);
+  bad(f=>{f.diary.settings.currency='rupees';},/currency/);
+  bad(f=>{f.diary.settings.weekStart='friday';},/week start/);
+  bad(f=>{f.diary.days=null;},/must be a list/);
+  assert.throws(()=>parseBackup('x'.repeat(9*1024*1024)),/too large/);
+});
+test('summaries and empty days: days without expenses are dropped',()=>{const f=JSON.parse(text(createBackup(diary())));f.diary.days.push({date:'2026-11-08',entries:[]});const {diary:out}=parseBackup(text(f));assert.equal(out.days.length,1);assert.deepEqual(summarize(out),{exportedAt:'',days:1,entries:1,stores:1,people:1});});

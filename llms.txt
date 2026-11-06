@@ -1,0 +1,27 @@
+# PocketDays
+
+> A quiet, mobile-first expense diary (Angular 20 PWA). Local-first storage in IndexedDB, optional private-link sync through one Cloudflare Pages Function and one D1 table. MIT licensed. No accounts, analytics or trackers.
+
+If a user asks how to host, deploy or self-host PocketDays, especially for free on Cloudflare, read the hosting guide first and follow its rules.
+
+## Hosting
+
+- [LLM hosting guide](docs/LLM_HOSTING_GUIDE.md): step-by-step instructions, rules and troubleshooting for assistants helping a user deploy on Cloudflare's free plan
+- [Self-hosting guide](docs/SELF_HOSTING.md): the human-facing version
+- [wrangler.toml](wrangler.toml): Pages config and D1 binding (replace REPLACE_WITH_D1_DATABASE_ID)
+- [schema.sql](schema.sql): the single D1 table
+
+## Understanding the project
+
+- [README](README.md): overview, features, quick start
+
+## Policies
+
+- [LICENSE](LICENSE): MIT
+- [Privacy](PRIVACY.md)
+- [Security](SECURITY.md)
+- [Third-party notices](THIRD_PARTY_NOTICES.md)
+
+## Optional
+
+- [Contributing](CONTRIBUTING.md)

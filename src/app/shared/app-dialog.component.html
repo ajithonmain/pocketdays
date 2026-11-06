@@ -1,0 +1,8 @@
+<dialog #panel class="app-dialog" aria-labelledby="app-dialog-title" aria-describedby="app-dialog-message" (cancel)="$event.preventDefault();dialogs.finish(false)" (click)="backdrop($event)">
+  @if(dialogs.active();as dialog){
+    <div class="dialog-symbol" [class.destructive]="dialog.destructive" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v6m0 4h.01"/></svg></div>
+    <h2 id="app-dialog-title">{{dialog.title}}</h2>
+    <p id="app-dialog-message">{{dialog.message}}</p>
+    <div class="dialog-actions"><button #cancelButton autofocus class="dialog-cancel" (click)="dialogs.finish(false)">{{dialog.cancelLabel || 'Cancel'}}</button><button class="dialog-confirm" [class.destructive]="dialog.destructive" (click)="dialogs.finish(true)">{{dialog.confirmLabel || 'Continue'}}</button></div>
+  }
+</dialog>

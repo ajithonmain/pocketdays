@@ -1,0 +1,9 @@
+name = "pocketdays"
+compatibility_date = "2026-11-07"
+pages_build_output_dir = "dist/pocketdays/browser"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "pocketdays"
+database_id = "REPLACE_WITH_D1_DATABASE_ID"
+

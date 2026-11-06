@@ -1,0 +1,13 @@
+<form class="catalog-add" (ngSubmit)="add()">
+  <label class="sr-only" [for]="kind()+'-new-name'">{{kind()==='stores'?'Store name':'Person name'}}</label>
+  <input [id]="kind()+'-new-name'" name="name" [(ngModel)]="name" (ngModelChange)="error.set(''); message.set('')" [placeholder]="kind()==='stores'?'Add a store':'Add a person'" maxlength="80" autocomplete="off" [disabled]="busy() || !diary.ready()" [attr.aria-describedby]="error()?kind()+'-error':null">
+  <button type="submit" class="catalog-add-button" [disabled]="busy() || !diary.ready() || !name.trim() || duplicate" [attr.aria-label]="kind()==='stores'?'Add store':'Add person'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
+</form>
+@if(duplicate){<p class="field-hint" role="status">{{kind()==='stores'?'This store is already saved.':'This person is already saved.'}}</p>}
+@if(error()){<p class="field-error catalog-error" [id]="kind()+'-error'" role="alert">{{error()}}</p>}
+<div class="catalog-pills" [attr.aria-label]="kind()==='stores'?'Saved stores':'Saved people'">
+  @for(item of diary.data()[kind()];track item.id){
+    <span class="mini-chip">@if(kind()==='stores'){<i class="store-swatch" [style.background-color]="color(item)" aria-hidden="true"></i>}<span class="mini-chip-name">{{item.name}}</span><button type="button" class="mini-chip-remove" [attr.aria-label]="'Remove '+item.name" [disabled]="busy()" (click)="requestRemove(item.id,item.name)"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="m5 5 6 6m0-6-6 6"/></svg></button></span>
+  }@empty{<p class="muted catalog-empty">{{kind()==='stores'?'No stores yet.':'No people yet.'}}</p>}
+</div>
+<p class="catalog-message" role="status">{{message()}}</p>

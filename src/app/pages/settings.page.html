@@ -1,0 +1,37 @@
+<section class="group settings-first"><h2 class="group-label">Appearance</h2>
+  <div class="segmented" style="--n:3" [style.--i]="themeIndex()" role="group" aria-label="Color theme"><button [attr.aria-pressed]="theme.choice()==='light'" (click)="theme.set('light')">Light</button><button [attr.aria-pressed]="theme.choice()==='dark'" (click)="theme.set('dark')">Dark</button><button [attr.aria-pressed]="theme.choice()==='system'" (click)="theme.set('system')">System</button></div>
+</section>
+
+<section class="group"><h2 class="group-label">Saved</h2>
+  <div class="panel list-panel">
+    <button class="row row-button" (click)="open('stores')"><span class="row-main"><strong>Stores</strong><small>Shown when logging</small></span><span class="row-value">{{diary.data().stores.length}}</span><app-icon class="chev" name="arrow"/></button>
+    <button class="row row-button" (click)="open('people')"><span class="row-main"><strong>People</strong><small>Suggested as you type</small></span><span class="row-value">{{diary.data().people.length}}</span><app-icon class="chev" name="arrow"/></button>
+  </div>
+</section>
+
+<section class="group"><h2 class="group-label">Sync</h2>
+  <div class="panel list-panel">
+    <div class="row"><span class="row-main"><strong>{{diary.status()}}</strong>@if(diary.error()){<small role="status">{{diary.error()}}</small>}</span><button class="pill-button" (click)="diary.sync()" [disabled]="!diary.ready()">Sync now</button></div>
+    <div class="row"><span class="row-main"><strong>Private link</strong><small>Opens this diary on another device. Keep it private.</small></span><button class="pill-button" (click)="copy()" [disabled]="!diary.ready()">Copy</button></div>
+  </div>
+  @if(message()){<p class="group-note" role="status">{{message()}}</p>}
+</section>
+
+@if(diary.conflict()){<section class="group"><h2 class="group-label">Sync conflict</h2><div class="panel"><p class="muted">Keep one copy. Back up first if you need both.</p><div class="button-row"><button class="pill-button" (click)="resolve(true)">Keep this device</button><button class="pill-button" (click)="resolve(false)">Use cloud copy</button></div></div></section>}
+
+<section class="group"><h2 class="group-label">Backup</h2>
+  <div class="panel list-panel">
+    <div class="row"><span class="row-main"><strong>Back up</strong><small>Save a copy as a file</small></span><button class="pill-button" (click)="download()" [disabled]="!diary.ready()">Download</button></div>
+    <div class="row"><span class="row-main"><strong>Restore</strong><small>From a backup file</small></span><button class="pill-button" (click)="picker.click()" [disabled]="!diary.ready()">Choose</button></div>
+  </div>
+  <input #picker type="file" accept=".json,application/json" hidden aria-label="Backup file" (change)="restoreFile($event)">
+  @if(backupError()){<p class="field-error" role="alert">{{backupError()}}</p>}
+  @if(backupMessage()){<p class="group-note" role="status">{{backupMessage()}}</p>}
+</section>
+
+@if(managing(); as kind){
+  <p-drawer [visible]="true" (visibleChange)="!$event && close()" position="bottom" styleClass="day-drawer" [modal]="true" [blockScroll]="false" [showCloseIcon]="false" [style]="{height:'auto', maxHeight:'85dvh'}" transitionOptions="0ms">
+    <ng-template #header><div class="drawer-heading"><span class="drag-handle"></span><div class="drawer-row"><h3 class="sheet-title">{{kind==='stores' ? 'Stores' : 'People'}}</h3><button class="icon-button" aria-label="Close" (click)="close()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="m4 4 8 8m0-8-8 8"/></svg></button></div></div></ng-template>
+    <div class="filter-sheet"><app-catalog-settings [kind]="kind"/></div>
+  </p-drawer>
+}

@@ -1,0 +1,12 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { loadSource } from './load-source.mjs';
+const {newDraft,draftError,applyDay}=await loadSource('entries');
+const diary=()=>({schemaVersion:1,stores:[],people:[],days:[],settings:{currency:'INR',weekStart:'monday',showDailyTotals:false}});
+const entry=(patch={})=>({...newDraft(),storeName:'Corner shop',amount:125,...patch});
+test('saving multiple stores recomputes totals without mutating source',()=>{const original=diary();const result=applyDay(original,'2026-11-07',[entry({amount:12.35}),entry({storeName:'Cafe',amount:20.15})]);assert.equal(result.days[0].total,32.5);assert.equal(result.days[0].entryCount,2);assert.equal(result.stores.length,2);assert.equal(original.days.length,0);});
+test('editing and deleting final entry replace the day summary',()=>{const first=applyDay(diary(),'2026-11-07',[entry()]);const edit=applyDay(first,'2026-11-07',[entry({amount:50})]);assert.equal(edit.days.length,1);assert.equal(edit.days[0].total,50);assert.equal(applyDay(edit,'2026-11-07',[]).days.length,0);});
+test('store names deduplicate case-insensitively',()=>{const result=applyDay(diary(),'2026-11-07',[entry(),entry({storeName:' corner SHOP '})]);assert.equal(result.stores.length,1);assert.equal(result.days[0].entries[0].storeId,result.days[0].entries[1].storeId);});
+test('payer and companion names are saved and snapshot IDs match',()=>{const result=applyDay(diary(),'2026-11-07',[entry({paidByMe:false,paidByName:'Sam',iOweThem:true,personNames:['Alex']})]);assert.equal(result.people.length,2);assert.equal(result.days[0].entries[0].personIds[0],result.people.find(p=>p.name==='Alex').id);assert.equal(result.days[0].entries[0].iOweThem,true);});
+test('invalid store, amount and payer are blocked',()=>{for(const patch of [{storeName:' '},{amount:0},{amount:-2},{amount:NaN},{amount:Infinity},{amount:.001},{paidByMe:false,paidByName:' '}]){assert.notEqual(draftError(entry(patch)),'');assert.throws(()=>applyDay(diary(),'2026-11-07',[entry(patch)]));}});
+test('paid-by-me removes stale payer and owed state',()=>{const result=applyDay(diary(),'2026-11-07',[entry({paidByName:'Sam',iOweThem:true})]);assert.equal(result.days[0].entries[0].paidByName,null);assert.equal(result.days[0].entries[0].iOweThem,false);});

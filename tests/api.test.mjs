@@ -1,0 +1,10 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { onRequest } from '../functions/api/diary.ts';
+const key='a'.repeat(64);
+const request=(method='GET',body,token=key)=>new Request('https://example.test/api/diary',{method,headers:{Authorization:`Bearer ${token}`},...(body?{body}: {})});
+test('rejects missing access key before database access',async()=>{const res=await onRequest({request:request('GET',undefined,'bad'),env:{}});assert.equal(res.status,401);});
+test('rejects unsupported methods',async()=>{assert.equal((await onRequest({request:request('DELETE'),env:{}})).status,405);});
+test('new private diary returns empty data without storing the key',async()=>{let args;const env={DB:{prepare(){return {bind(...v){args=v;return this;},async first(){return null;}};}}};const res=await onRequest({request:request(),env});assert.equal(res.status,200);assert.deepEqual((await res.json()).data.days,[]);assert.match(args[0],/^[a-f0-9]{64}$/);assert.notEqual(args[0],key);assert.equal(res.headers.get('Cache-Control'),'no-store');});
+test('rejects malformed write payload',async()=>{assert.equal((await onRequest({request:request('PUT','{}'),env:{}})).status,400);});
+test('stale revision is rejected without a successful update',async()=>{const env={DB:{prepare(){return {bind(){return this;},async run(){return {meta:{changes:0}};}};}}};const data={schemaVersion:1,stores:[],people:[],days:[],settings:{}};assert.equal((await onRequest({request:request('PUT',JSON.stringify({revision:1,data})),env})).status,409);});

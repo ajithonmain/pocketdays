@@ -1,0 +1,27 @@
+node_modules/
+dist/
+.angular/
+out-tsc/
+.wrangler/
+.dev.vars
+.DS_Store
+.claude/
+.env
+.env.*
+*.log
+# Backups and exports can contain personal data
+pocketdays-backup-*.json
+# Third-party design references are kept locally only and are not redistributed
+docs/references/*.jpg
+docs/references/*.jpeg
+docs/references/*.png
+# Internal development docs, kept locally only and not published
+AGENTS.md
+CLAUDE.md
+docs/ARCHITECTURE.md
+docs/DESIGN.md
+docs/ROADMAP.md
+docs/STATUS.md
+docs/TESTING.md
+docs/WORK_LOG.md
+docs/references/
