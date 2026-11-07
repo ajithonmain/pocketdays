@@ -5,7 +5,7 @@
   @if(update.available()&&!update.dismissed()){<div class="update" role="status"><span>New version ready</span><span class="update-actions"><button type="button" (click)="update.later()">Later</button><button type="button" class="update-now" (click)="update.reload()">Update</button></span></div>}
   <nav aria-label="Main navigation">
     <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}" aria-label="Calendar"><app-icon name="calendar"/><span>Calendar</span></a>
-    <a routerLink="/stores" routerLinkActive="active" aria-label="Stores"><app-icon name="stores"/><span>Stores</span></a>
+    <a routerLink="/stores" routerLinkActive="active" [class.active]="peopleRoute()" aria-label="Stores"><app-icon name="stores"/><span>Stores</span></a>
     <a routerLink="/settings" routerLinkActive="active" [attr.aria-label]="syncLabel()?'Settings, '+syncLabel():'Settings'"><app-icon name="settings"/><span>Settings</span>@if(syncLabel()){<i class="nav-dot" [class.alert]="diary.conflict()" aria-hidden="true"></i>}</a>
   </nav>
 </div>

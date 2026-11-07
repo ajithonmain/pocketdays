@@ -1,3 +1,4 @@
+import { parseBackup } from '../../src/app/core/backup';
 interface Statement { bind(...values: unknown[]): Statement; first<T>(): Promise<T | null>; run(): Promise<{meta:{changes:number}}> }
 interface Env { DB: { prepare(sql:string): Statement } }
 interface Context { request: Request; env: Env }
@@ -11,7 +12,9 @@ export async function onRequest({request,env}:Context):Promise<Response>{
   if(request.method==='PUT'){
     const raw=await request.text();if(raw.length>1_000_000)return reply({error:'Diary too large'},413);
     let body;try{body=JSON.parse(raw);}catch{return reply({error:'Invalid JSON'},400);}
-    if(!Number.isSafeInteger(body.revision)||body.revision<0||body.data?.schemaVersion!==1||!Array.isArray(body.data.days)||!Array.isArray(body.data.stores)||!Array.isArray(body.data.people)||!body.data.settings)return reply({error:'Invalid diary'},400);
+    if(!body || !Number.isSafeInteger(body.revision)||body.revision<0||body.data?.schemaVersion!==1||!Array.isArray(body.data.days)||!Array.isArray(body.data.stores)||!Array.isArray(body.data.people)||!body.data.settings)return reply({error:'Invalid diary'},400);
+    try { body.data = parseBackup(JSON.stringify({app:'PocketDays',kind:'backup',version:1,diary:body.data})).diary; }
+    catch { return reply({error:'Invalid diary'},400); }
     const initial=JSON.stringify(empty());
     await env.DB.prepare('INSERT OR IGNORE INTO diaries (key_hash,revision,data) VALUES (?,0,?)').bind(hash,initial).run();
     const result=await env.DB.prepare('UPDATE diaries SET data=?,revision=revision+1,updated_at=CURRENT_TIMESTAMP WHERE key_hash=? AND revision=?').bind(JSON.stringify(body.data),hash,body.revision).run();

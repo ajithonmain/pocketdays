@@ -92,7 +92,7 @@ export function dayMarkers(day: DayDocument | undefined, stores: StoreDocument[]
   for (const entry of day?.entries ?? []) {
     const id = entry.storeId || entry.storeName;
     const store = stores.find(item => item.id === id);
-    if (!unique.has(id)) unique.set(id, {id, name: entry.storeName, color: store ? colorForStore(store) : colorForStore({id, color: entry.storeColor})});
+    if (!unique.has(id)) unique.set(id, {id, name: store?.name ?? entry.storeName, color: store ? colorForStore(store) : colorForStore({id, color: entry.storeColor})});
   }
   return [...unique.values()].sort((a,b) => a.id.localeCompare(b.id));
 }

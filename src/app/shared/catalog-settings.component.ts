@@ -1,3 +1,4 @@
+import { RouterLink } from '@angular/router';
 import { colorForStore } from '../core/store-colors';
 import { StoreDocument } from '../core/models';
 import { AppDialogService } from '../core/app-dialog.service';
@@ -8,7 +9,7 @@ import { sameName } from '../core/names';
 import { DiaryService } from '../core/diary.service';
 @Component({
   selector: 'app-catalog-settings',
-  imports: [FormsModule],
+  imports: [FormsModule, RouterLink],
   templateUrl: './catalog-settings.component.html',
 })
 export class CatalogSettingsComponent {

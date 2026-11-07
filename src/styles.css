@@ -465,3 +465,53 @@ html .entry-fields .p-inputtext:enabled:focus { border-color: var(--accent); box
 .pair-input:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
 .pair-sheet .field-hint { margin: 0 8px; text-align: center; }
 .pair-sheet .field-error { margin: 0 8px; text-align: center; }
+
+/* History pages share the calendar's neutral surfaces and type scale. */
+.calendar-tools { display:flex; justify-content:flex-end; align-items:center; gap:8px; margin-top:-12px; margin-bottom:8px; }
+.today-button { display:none; opacity:0; min-height:44px; padding:0 14px; border:1px solid var(--edge); border-radius:24px; background:transparent; color:var(--text); }
+.calendar-search-button { min-width:44px; min-height:44px; display:grid; place-items:center; }
+.calendar-search { display:flex; align-items:center; gap:8px; margin-bottom:16px; }
+.calendar-search .search-field { flex:1; min-width:0; margin:0; }
+.history-mode { margin:20px 0 0; }
+.history-heading { padding-top:24px; display:flex; align-items:center; gap:10px; margin-bottom:16px; }
+.history-heading h1 { display:flex; align-items:center; gap:8px; flex:1; min-width:0; overflow-wrap:anywhere; font-size:22px; margin:0; }
+.identity-dot { display:inline-block; flex:none; width:10px; height:10px; border-radius:50%; }
+.history-summary { display:flex; flex-direction:column; gap:6px; margin:24px 0; font-variant-numeric:tabular-nums; }
+.history-summary > strong { font-size:36px; letter-spacing:-1px; }
+.history-summary span,.history-summary small,.filter-summary { color:var(--muted); font-size:13px; }
+.range-controls { margin:20px 0; }
+.range-step { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:8px; }
+.history-heading .text-button,.range-step .text-button,.calendar-search .text-button,.filter-summary .text-button,.rename-drawer .text-button,.show-more { min-height:44px; }
+.month-chart { margin:24px 0; }
+.month-chart svg { display:block; width:100%; height:120px; }
+.chart-months { display:grid; grid-template-columns:repeat(12,minmax(0,1fr)); }
+.chart-months button { min-height:44px; border:0; background:transparent; color:var(--muted); padding:0; font-size:11px; }
+.chart-months button[aria-pressed=true] { color:var(--text); font-weight:700; text-decoration:underline; }
+.history-facts { margin:24px 0; font-size:13px; }
+.history-facts > div { display:flex; justify-content:space-between; gap:16px; padding:14px 0; border-bottom:1px solid var(--edge); }
+.history-facts dt { color:var(--muted); }
+.history-facts dd { margin:0; text-align:right; font-variant-numeric:tabular-nums; overflow-wrap:anywhere; }
+.favorite-name { display:block; }
+.history-month h2,.search-results h2 { font-size:14px; margin:24px 0 12px; }
+.history-order { border-bottom:1px solid var(--edge); padding:14px; }
+.history-order:last-child { border:0; }
+.order-open,.search-result { width:100%; display:flex; align-items:flex-start; gap:12px; padding:0; border:0; background:transparent; text-align:left; color:var(--text); min-height:44px; }
+.order-store { display:inline-block; min-height:44px; padding-top:12px; color:var(--muted); font-size:12px; overflow-wrap:anywhere; }
+.rename-form { display:flex; flex-direction:column; gap:12px; padding:8px 20px 24px; }
+.rename-form input { width:100%; }
+.search-results { list-style:none; padding:0; margin:0; }
+.search-order { border-bottom:1px solid var(--edge); }
+.search-store { display:flex; gap:8px; align-items:center; min-height:44px; font-weight:600; overflow-wrap:anywhere; }
+.search-result { padding-bottom:12px; }
+.show-more { width:100%; }
+.today-button.is-away { display:inline-block; opacity:1; }
+@media(prefers-reduced-motion:no-preference) {
+  .today-button { transition:opacity .2s var(--ease-out), display .2s allow-discrete; }
+  @starting-style { .today-button.is-away { opacity:0; } }
+}
+.month-chart { overflow-x:auto; direction:rtl; scrollbar-width:thin; }
+.chart-plot { direction:ltr; position:relative; min-width:528px; padding-bottom:44px; }
+.chart-months { position:absolute; inset:0; }
+.chart-months button { display:flex; justify-content:center; align-items:flex-end; padding-bottom:12px; min-width:44px; }
+.chart-months button[aria-pressed=true] { background:color-mix(in srgb, var(--text) 5%, transparent); }
+a.mini-chip-name { display:inline-flex; align-items:center; min-height:44px; color:inherit; text-decoration:none; }

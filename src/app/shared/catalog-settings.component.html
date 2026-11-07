@@ -7,7 +7,7 @@
 @if(error()){<p class="field-error catalog-error" [id]="kind()+'-error'" role="alert">{{error()}}</p>}
 <div class="catalog-pills" [attr.aria-label]="kind()==='stores'?'Saved stores':'Saved people'">
   @for(item of diary.data()[kind()];track item.id){
-    <span class="mini-chip">@if(kind()==='stores'){<i class="store-swatch" [style.background-color]="color(item)" aria-hidden="true"></i>}<span class="mini-chip-name">{{item.name}}</span><button type="button" class="mini-chip-remove" [attr.aria-label]="'Remove '+item.name" [disabled]="busy()" (click)="requestRemove(item.id,item.name)"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="m5 5 6 6m0-6-6 6"/></svg></button></span>
+    <span class="mini-chip">@if(kind()==='stores'){<i class="store-swatch" [style.background-color]="color(item)" aria-hidden="true"></i>}<a class="mini-chip-name" [routerLink]="[kind()==='stores'?'/stores':'/people', item.id]">{{item.name}}</a><button type="button" class="mini-chip-remove" [attr.aria-label]="'Remove '+item.name" [disabled]="busy()" (click)="requestRemove(item.id,item.name)"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="m5 5 6 6m0-6-6 6"/></svg></button></span>
   }@empty{<p class="muted catalog-empty">{{kind()==='stores'?'No stores yet.':'No people yet.'}}</p>}
 </div>
 <p class="catalog-message" role="status">{{message()}}</p>

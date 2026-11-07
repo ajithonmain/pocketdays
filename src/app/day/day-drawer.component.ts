@@ -3,14 +3,15 @@ import { Component, OnDestroy, computed, inject, input, output, signal } from '@
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { DrawerModule } from 'primeng/drawer';
 import { DiaryService } from '../core/diary.service';
+import { displayEntry } from '../core/entry-display';
 import { draftError, EntryDraft, newDraft } from '../core/entries';
 import { StoreSectionComponent } from './store-section.component';
 @Component({selector:'app-day-drawer',imports:[DrawerModule,CurrencyPipe,DatePipe,StoreSectionComponent],templateUrl:'./day-drawer.component.html'})
 export class DayDrawerComponent implements OnDestroy {
-  readonly dialogs=inject(AppDialogService);private closing=false;readonly diary=inject(DiaryService);readonly date=input.required<string>();readonly addNew=input(false);readonly closed=output<void>();readonly saved=output<void>();
+  readonly dialogs=inject(AppDialogService);private closing=false;readonly diary=inject(DiaryService);readonly date=input.required<string>();readonly addNew=input(false);readonly entryId=input('');readonly closed=output<void>();readonly saved=output<void>();
   readonly visible=signal(true);readonly drafts=signal<EntryDraft[]>([]);readonly active=signal('');readonly submitted=signal(false);readonly saving=signal(false);readonly error=signal('');readonly dirty=signal(false);
   readonly total=computed(()=>this.drafts().reduce((s,e)=>s+(e.amount||0),0));private original='[]';private touchY=0;
-  ngOnInit(){const entries=this.diary.data().days.find(d=>d.date===this.date())?.entries||[];this.original=JSON.stringify(entries);this.drafts.set(entries.map(e=>({...e,paidByName:e.paidByName||'',personNames:[...e.personNames]})));if(!entries.length||this.addNew())this.add(false);else this.active.set(entries[0].id);}
+  ngOnInit(){const entries=this.diary.data().days.find(d=>d.date===this.date())?.entries||[];this.original=JSON.stringify(entries);this.drafts.set(entries.map(raw=>{const e=displayEntry(this.diary.data(),raw);return {...e,paidByName:e.paidByName||'',personNames:[...e.personNames]};}));if(!entries.length||this.addNew())this.add(false);else this.active.set(entries.find(e=>e.id===this.entryId())?.id??entries[0].id);}
   private exitTimer?:ReturnType<typeof setTimeout>;
   private dismiss(){document.body.classList.add('sheet-closing');this.exitTimer=setTimeout(()=>{this.visible.set(false);document.body.classList.remove('sheet-closing');this.closed.emit();},300);}
   ngOnDestroy(){clearTimeout(this.exitTimer);document.body.classList.remove('sheet-closing');}

@@ -27,3 +27,4 @@ docs/WORK_LOG.md
 docs/references/
 # Generated at build time
 src/app/core/build-info.ts
+docs/SPEC_STORES_PEOPLE_CALENDAR.md

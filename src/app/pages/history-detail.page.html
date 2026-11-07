@@ -1,0 +1,25 @@
+@if(!diary.ready()){<p class="calendar-note">Opening diary…</p>}@else if(!existing()){
+<a routerLink="/stores" class="text-button">Back</a><p class="calendar-note">No history found.</p>
+}@else{
+<header class="history-heading"><button class="text-button" (click)="back()" aria-label="Back to history">Back</button><h1><i class="identity-dot" [style.background]="color()"></i>{{name()}}</h1>@if(live()){<button class="text-button" (click)="openRename()">Rename</button>}</header>
+@if(!live()){<p class="detail-sub">{{kind==='stores'?'Removed from saved stores':'Not in saved people'}}</p>}
+<div class="history-summary"><strong>{{summary().total | currency:diary.data().settings.currency:'symbol':'1.0-2'}}</strong><span>{{countLabel(summary().visits)}} · average {{summary().average | currency:diary.data().settings.currency:'symbol':'1.0-2'}}</span>@if(kind==='people'){<small>Full order amounts, not a personal share.</small>}</div>
+<app-range-controls/>
+@if(filterText()){<p class="filter-summary">{{filterText()}} <button class="text-button" (click)="state.payer.set('all');state.person.set('')">Reset</button></p>}
+<app-month-bars [series]="series()" [currency]="diary.data().settings.currency" [color]="color()" [selected]="activeMonth()" (choose)="selectedMonth.set($event)"/>
+@if(activeMonth()){<p class="filter-summary">Orders in {{date(activeMonth()) | date:'MMMM yyyy'}} <button class="text-button" (click)="selectedMonth.set('')">Clear</button></p>}
+@if(summary().visits){<dl class="history-facts"><div><dt>First {{kind==='stores'?'visit':'together'}}</dt><dd>{{date(summary().first) | date:'d MMM yyyy'}}</dd></div><div><dt>Last {{kind==='stores'?'visit':'together'}}</dt><dd>{{date(summary().last) | date:'d MMM yyyy'}}</dd></div>
+@if(kind==='stores'){
+@if(summary().largest;as largest){<div><dt>Largest order · {{date(largest.date) | date:'d MMM yyyy'}}</dt><dd>{{largest.entry.amount | currency:diary.data().settings.currency}}</dd></div>}
+@if(companions()[0];as person){<div><dt>Most common companion</dt><dd>{{person.name}}</dd></div>}
+}@else{<div><dt>Favorite stores</dt><dd>@for(store of favorites();track store.name){<span class="favorite-name">{{store.name}} · {{store.visits}}</span>}</dd></div>}
+<div><dt>Paid by me</dt><dd>{{summary().paidByMe | currency:diary.data().settings.currency}}</dd></div>
+@if(kind==='stores'){<div><dt>Paid by others</dt><dd>{{summary().paidByOthers | currency:diary.data().settings.currency}}</dd></div>}@else{<div><dt>Paid by them</dt><dd>{{summary().paidByThem | currency:diary.data().settings.currency}}</dd></div><div><dt>Marked as owed</dt><dd>{{summary().markedOwed | currency:diary.data().settings.currency}}</dd></div>}
+</dl>}
+@for(group of groups();track group.month){<section class="history-month"><h2>{{date(group.month) | date:'MMMM yyyy'}}</h2><div class="panel list-panel">@for(order of group.orders;track order.entry.id){<app-order-row [order]="order" [currency]="diary.data().settings.currency"/>}</div></section>}@empty{<p class="calendar-note">No orders in this range.</p>}
+}
+@if(renaming()){
+<p-drawer [visible]="true" (visibleChange)="!$event && closeRename()" position="bottom" styleClass="day-drawer rename-drawer" [modal]="true" [showCloseIcon]="false" [style]="{height:'auto'}" transitionOptions="0ms" [closeOnEscape]="!saving()" [dismissible]="!saving()">
+<ng-template #header><div class="drawer-heading" (touchstart)="swipeStart($event)" (touchend)="swipeEnd($event)"><span class="drag-handle"></span><div class="drawer-row"><h2 class="sheet-title">Rename {{kind==='stores'?'store':'person'}}</h2><button class="text-button" [disabled]="saving()" (click)="closeRename()">Close</button></div></div></ng-template>
+<form class="rename-form" (ngSubmit)="saveName()"><label for="rename-name">Name</label><input pInputText id="rename-name" name="name" maxlength="80" autocomplete="off" [(ngModel)]="nameDraft" [disabled]="saving()" autofocus><p class="field-error" aria-live="polite">{{renameError() || (nameDraft.trim() ? renameValidation() : '')}}</p><button class="primary" type="submit" [disabled]="saving() || !!renameValidation()">{{saving()?'Saving…':'Save'}}</button></form>
+</p-drawer>}

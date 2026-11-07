@@ -2,7 +2,7 @@ import { normalizeDiaryColors } from './store-colors';
 import { Injectable, signal } from '@angular/core';
 import { DiaryDocument, emptyDiary, SyncEnvelope } from './models';
 import { applyDay, EntryDraft } from './entries';
-import { addCatalogItem, CatalogKind, removeCatalogItem } from './catalog';
+import { addCatalogItem, CatalogKind, removeCatalogItem, renameCatalogItem } from './catalog';
 import { mergeDiary } from './merge';
 import { generatePairCode, openDiaryKey, pairingId, sealDiaryKey } from './pairing';
 interface LocalRecord { data:DiaryDocument; revision:number; dirty:boolean; base?:DiaryDocument; }
@@ -47,6 +47,9 @@ export class DiaryService {
   }
   async removeCatalog(kind: CatalogKind, id: string) {
     await this.editCatalog(data => removeCatalogItem(data, kind, id));
+  }
+  async renameCatalog(kind: CatalogKind, id: string, name: string, originalName: string) {
+    await this.editCatalog(data => renameCatalogItem(data, kind, id, name, originalName));
   }
   private async editCatalog(change: (data: DiaryDocument) => DiaryDocument) {
     if (!this.ready()) throw new Error('Diary is still opening.');

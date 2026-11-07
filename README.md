@@ -4,14 +4,14 @@ A quiet, mobile-first expense diary. The calendar is the home screen: tap a date
 
 No accounts, no ads, no analytics, no third-party fonts, no trackers.
 
-> Status: early and actively developed. The app builds and its 43 tests pass, but live cloud sync on a real deployment, installation on physical devices and Lighthouse scores have not been verified yet.
+> Status: early and actively developed. The app builds and its 63 tests pass, but live cloud sync on a real deployment, installation on physical devices and Lighthouse scores have not been verified yet.
 
 ## Features
 
-- Calendar home screen with a month navigator, a year picker, and a ring or solid color on each date that has spend.
+- Calendar with month and year navigation, a Today shortcut, and expense search across all dates by store, note, person, payer or amount.
 - Fast logging in a bottom sheet: store, amount, optional note, who paid, and people who were with you (token field with suggestions).
 - Several stores per day, each in its own card, with a day total.
-- Stores page: totals and visits per store for a month, year or all time, with search, sorting, paid-by and person filters, and a per-store order list.
+- Stores and People history: totals, visit counts, monthly charts, name correction, and orders that open the matching calendar entry. Person totals use full order amounts.
 - Automatic, unique store colors generated from the store name.
 - Light, Dark and System themes.
 - Works offline; saves locally first. Optional sync between your devices with a short one-time code or a private link.

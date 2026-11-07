@@ -1,5 +1,6 @@
 import { DiaryDocument } from './models';
 import { colorForStore } from './store-colors';
+import { displayEntry, personByName } from './entry-display';
 import { sameName } from './names';
 
 export type Period = 'month' | 'year' | 'all';
@@ -31,10 +32,11 @@ export function storeRows(data: DiaryDocument, filters: StoreFilters, anchor = n
   const groups = new Map<string, StoreRow>();
   for (const day of data.days) {
     if (!inPeriod(day.date, filters.period, anchor)) continue;
-    for (const entry of day.entries) {
+    for (const raw of day.entries) {
+      const entry = displayEntry(data, raw);
       if (filters.payer === 'me' && !entry.paidByMe) continue;
       if (filters.payer === 'others' && entry.paidByMe) continue;
-      if (!involves(entry, filters.person ?? '')) continue;
+      if (!involves(entry, personByName(data,filters.person??'')?.name ?? filters.person ?? '')) continue;
       const key = entry.storeId || entry.storeName;
       const store = data.stores.find(s => s.id === entry.storeId);
       const name = store?.name ?? entry.storeName;
@@ -52,6 +54,7 @@ export function storeRows(data: DiaryDocument, filters: StoreFilters, anchor = n
     : by === 'visits' ? b.visits - a.visits || b.total - a.total
     : by === 'recent' ? b.last.localeCompare(a.last)
     : b.total - a.total || a.name.localeCompare(b.name));
+  for (const row of rows) row.total = Math.round(row.total*100)/100;
   return rows;
 }
 
@@ -62,11 +65,12 @@ export function storeOrders(data: DiaryDocument, key: string, filters: Pick<Stor
   const orders: StoreOrder[] = [];
   for (const day of data.days) {
     if (!inPeriod(day.date, filters.period, anchor)) continue;
-    for (const entry of day.entries) {
+    for (const raw of day.entries) {
+      const entry = displayEntry(data, raw);
       if ((entry.storeId || entry.storeName) !== key) continue;
       if (filters.payer === 'me' && !entry.paidByMe) continue;
       if (filters.payer === 'others' && entry.paidByMe) continue;
-      if (!involves(entry, filters.person ?? '')) continue;
+      if (!involves(entry, personByName(data,filters.person??'')?.name ?? filters.person ?? '')) continue;
       orders.push({ id: entry.id, date: day.date, amount: entry.amount || 0, items: entry.items?.trim() ?? '', payer: entry.paidByMe ? 'Me' : (entry.paidByName || 'Other'), paidByMe: entry.paidByMe, people: [...(entry.personNames ?? [])] });
     }
   }

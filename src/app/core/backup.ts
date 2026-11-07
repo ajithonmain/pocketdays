@@ -1,3 +1,4 @@
+import { displayEntry } from './entry-display';
 import { DayDocument, DiaryDocument, EntryDocument, PersonDocument, SettingsDocument, StoreDocument } from './models';
 
 export const BACKUP_LIMIT_BYTES = 8 * 1024 * 1024;
@@ -6,7 +7,7 @@ export interface BackupSummary { exportedAt: string; days: number; entries: numb
 
 /** Wraps the diary for download. The private diary link is never included. */
 export function createBackup(diary: DiaryDocument, now = new Date()): BackupFile {
-  return { app: 'PocketDays', kind: 'backup', version: 1, exportedAt: now.toISOString(), diary };
+  return { app: 'PocketDays', kind: 'backup', version: 1, exportedAt: now.toISOString(), diary: {...diary, days:diary.days.map(day=>({...day,entries:day.entries.map(entry=>displayEntry(diary,entry))}))} };
 }
 export function backupFileName(now = new Date()): string {
   const p = (n: number) => String(n).padStart(2, '0');
@@ -40,7 +41,7 @@ function parseStore(v: unknown): StoreDocument {
 }
 function parsePerson(v: unknown): PersonDocument {
   if (!isRecord(v)) return fail('A person is not valid.');
-  return { id: text(v['id'], 'A person id', 64), name: text(v['name'], 'A person name', 80), createdAt: text(v['createdAt'], 'A person date', 40) };
+  return { id: text(v['id'], 'A person id', 64), name: text(v['name'], 'A person name', 80), createdAt: text(v['createdAt'], 'A person date', 40), ...(v['previousNames'] === undefined ? {} : { previousNames: list(v['previousNames'], 'Previous names', 100).map(n => text(n, 'A previous name', 80)) }) };
 }
 function parseEntry(v: unknown): EntryDocument {
   if (!isRecord(v)) return fail('An expense is not valid.');
@@ -57,6 +58,7 @@ function parseEntry(v: unknown): EntryDocument {
     iOweThem: !paidByMe && v['iOweThem'] === true, personIds: ids, personNames: names,
     createdAt: text(v['createdAt'], 'An expense date', 40), updatedAt: text(v['updatedAt'], 'An expense date', 40),
   };
+  if (v['paidById'] !== undefined) { const id=text(v['paidById'], 'A payer id', 64); if (!paidByMe) entry.paidById=id; }
   const color = hex(v['storeColor']); if (color) entry.storeColor = color;
   return entry;
 }

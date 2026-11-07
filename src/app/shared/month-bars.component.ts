@@ -1,0 +1,9 @@
+import { Component, computed, input, output } from '@angular/core';
+import { CurrencyPipe, DatePipe } from '@angular/common';
+import { MonthTotal } from '../core/history-stats';
+@Component({selector:'app-month-bars',imports:[CurrencyPipe,DatePipe],template:`
+<div class="month-chart" role="group" aria-label="Monthly spend chart">
+<div class="chart-plot"><svg role="img" [attr.aria-label]="description()" viewBox="0 0 360 120" preserveAspectRatio="none" [style.color]="color()">@for(bar of series();track bar.month;let i=$index){<rect [attr.x]="i*30+10" [attr.y]="110-height(bar.total)" width="10" [attr.height]="height(bar.total)" rx="2" fill="currentColor" [attr.opacity]="selected() && selected()!==bar.month ? .35 : 1"/>}</svg>
+<div class="chart-months">@for(bar of series();track bar.month){<button [attr.aria-label]="(date(bar.month) | date:'MMMM yyyy')+', '+(bar.total | currency:currency())" [attr.aria-pressed]="selected()===bar.month" (click)="choose.emit(selected()===bar.month?'':bar.month)">{{date(bar.month) | date:'MMM'}}</button>}</div></div>
+<ul class="sr-only">@for(bar of series();track bar.month){<li>{{bar.month}}: {{bar.total | currency:currency()}}</li>}</ul></div>`})
+export class MonthBarsComponent {readonly series=input.required<MonthTotal[]>();readonly color=input('var(--text)');readonly currency=input('INR');readonly selected=input('');readonly choose=output<string>();readonly max=computed(()=>Math.max(1,...this.series().map(b=>b.total)));height(total:number){return total?Math.max(3,total/this.max()*100):1;}date(month:string){return new Date(month+'-01T12:00:00');}readonly description=computed(()=>{const bars=this.series();const high=bars.reduce((a,b)=>b.total>a.total?b:a,{month:'',total:0,visits:0});return `${bars[0]?.month} to ${bars.at(-1)?.month}, total ${bars.reduce((s,b)=>s+b.total,0).toFixed(2)} ${this.currency()}, highest ${high.month}: ${high.total.toFixed(2)}. Select a month to filter orders.`;});}
