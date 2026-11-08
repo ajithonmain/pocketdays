@@ -3,7 +3,7 @@ interface Statement { bind(...values: unknown[]): Statement; first<T>(): Promise
 interface Env { DB: { prepare(sql:string): Statement } }
 interface Context { request: Request; env: Env }
 const reply=(data:unknown,status=200)=>new Response(JSON.stringify(data),{status,headers:{'Content-Type':'application/json','Cache-Control':'no-store'}});
-const empty=()=>({schemaVersion:1,stores:[],people:[],days:[],settings:{currency:'INR',weekStart:'monday',showDailyTotals:false}});
+const empty=()=>({schemaVersion:1,stores:[],people:[],days:[],settings:{currency:'INR',weekStart:'sunday',showDailyTotals:false}});
 export async function onRequest({request,env}:Context):Promise<Response>{
   if(!['GET','PUT'].includes(request.method)) return reply({error:'Method not allowed'},405);
   const key=request.headers.get('Authorization')?.match(/^Bearer ([a-f0-9]{64})$/)?.[1];

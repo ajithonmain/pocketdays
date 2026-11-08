@@ -20,8 +20,8 @@ export class CalendarComponent {
   constructor(){effect(()=>{const focus=this.initialFocus();if(focus && this.diary.ready())untracked(()=>this.openFocused(focus));});}
   readonly Math=Math;readonly diary=inject(DiaryService);readonly open=output<string>();readonly add=output<string>();readonly today=signal(dateKey(new Date()));
   readonly month=signal(new Date(new Date().getFullYear(),new Date().getMonth(),1));readonly selected=signal(dateKey(new Date()));
-  readonly weekdays=computed(()=>this.diary.data().settings.weekStart==='monday'?['Mon','Tue','Wed','Thu','Fri','Sat','Sun']:['Sun','Mon','Tue','Wed','Thu','Fri','Sat']);
-  readonly days=computed(()=>{const d=this.month();const offset=(d.getDay()+(this.diary.data().settings.weekStart==='monday'?6:0))%7;return Array.from({length:Math.ceil((offset+new Date(d.getFullYear(),d.getMonth()+1,0).getDate())/7)*7},(_,i)=>{const date=new Date(d.getFullYear(),d.getMonth(),i-offset+1);const key=dateKey(date);return {key,date,inMonth:date.getMonth()===d.getMonth(),record:this.diary.data().days.find(x=>x.date===key),markers:dayMarkers(this.diary.data().days.find(x=>x.date===key),this.diary.data().stores)};});});
+  readonly weekdays=computed(()=>['Sun','Mon','Tue','Wed','Thu','Fri','Sat']);
+  readonly days=computed(()=>{const d=this.month();const offset=d.getDay();return Array.from({length:Math.ceil((offset+new Date(d.getFullYear(),d.getMonth()+1,0).getDate())/7)*7},(_,i)=>{const date=new Date(d.getFullYear(),d.getMonth(),i-offset+1);const key=dateKey(date);return {key,date,inMonth:date.getMonth()===d.getMonth(),record:this.diary.data().days.find(x=>x.date===key),markers:dayMarkers(this.diary.data().days.find(x=>x.date===key),this.diary.data().stores)};});});
   readonly selectedEntries=computed(()=>this.diary.data().days.find(d=>d.date===this.selected())?.entries??[]);
   readonly selectedTotal=computed(()=>this.selectedEntries().reduce((sum,e)=>sum+(e.amount||0),0));
   readonly selectedDate=computed(()=>new Date(this.selected()+'T12:00:00'));

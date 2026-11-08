@@ -5,5 +5,5 @@ export interface DayDocument { date: string; total: number; entryCount: number; 
 export interface SettingsDocument { currency: string; weekStart: 'monday' | 'sunday'; showDailyTotals: boolean; }
 export interface DiaryDocument { schemaVersion: 1; stores: StoreDocument[]; people: PersonDocument[]; days: DayDocument[]; settings: SettingsDocument; }
 export interface SyncEnvelope { revision: number; data: DiaryDocument; }
-export const emptyDiary = (): DiaryDocument => ({schemaVersion:1,stores:[],people:[],days:[],settings:{currency:'INR',weekStart:'monday',showDailyTotals:false}});
+export const emptyDiary = (): DiaryDocument => ({schemaVersion:1,stores:[],people:[],days:[],settings:{currency:'INR',weekStart:'sunday',showDailyTotals:false}});
 
