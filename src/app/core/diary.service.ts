@@ -76,26 +76,42 @@ export class DiaryService {
     });
     void this.sync();
   }
+  // The lock is held only for local IndexedDB work, never across network calls,
+  // so a stalled request cannot block saveDay.
   async sync(){
     if(!this.ready()||this.syncing)return;if(!this.online()){this.status.set(this.pending()?'Offline · sync pending':'Offline');return;}
     this.syncing=true;
-    try{await this.lock(async()=>{
-      await this.load();this.error.set('');this.status.set('Syncing');
+    let again=false;
+    try{
+      await this.lock(()=>this.load());this.error.set('');this.status.set('Syncing');
       const remote=await this.request('GET');
-      if(this.pending()){
+      const sent=await this.lock(async()=>{
+        await this.load();
+        if(!this.pending()){this.data.set(remote.data);this.revision=remote.revision;this.base=structuredClone(remote.data);this.conflict.set(false);await this.persist();return null;}
         if(remote.revision!==this.revision){
           let merged: DiaryDocument;
           try { merged = mergeDiary(this.base, this.data(), remote.data); }
-          catch { this.conflict.set(true);this.status.set('Sync conflict');this.error.set('Changed on another device. Pick a copy in Settings.');return; }
+          catch { this.conflict.set(true);this.status.set('Sync conflict');this.error.set('Changed on another device. Pick a copy in Settings.');return null; }
           this.data.set(merged);this.revision=remote.revision;
         }
-        const saved=await this.request('PUT');this.revision=saved.revision;this.data.set(saved.data);
-      }else{this.data.set(remote.data);this.revision=remote.revision;}
-      this.base=structuredClone(this.data());this.pending.set(false);this.conflict.set(false);await this.persist();this.status.set('Up to date');
-    });}catch{this.status.set(this.pending()?'Sync pending':'On this device');this.error.set('Cloud sync unavailable. Saved on this device; will retry.');}finally{this.syncing=false;}
+        return {data:this.data(),revision:this.revision};
+      });
+      if(sent){
+        const saved=await this.request('PUT',sent);
+        await this.lock(async()=>{
+          await this.load();
+          this.revision=saved.revision;this.base=structuredClone(saved.data);
+          if(JSON.stringify(this.data())===JSON.stringify(sent.data)){this.data.set(saved.data);this.pending.set(false);}
+          else{again=true;}
+          this.conflict.set(false);await this.persist();
+        });
+      }
+      if(!this.conflict())this.status.set(this.pending()?'Sync pending':'Up to date');
+    }catch{this.status.set(this.pending()?'Sync pending':'On this device');this.error.set('Cloud sync unavailable. Saved on this device; will retry.');}finally{this.syncing=false;}
+    if(again)void this.sync();
   }
-  private async request(method:'GET'|'PUT'):Promise<SyncEnvelope>{
-    const res=await fetch('/api/diary',{method,signal:AbortSignal.timeout(10000),headers:{Authorization:`Bearer ${this.key}`,'Content-Type':'application/json'},...(method==='PUT'?{body:JSON.stringify({revision:this.revision,data:this.data()})}:{})});
+  private async request(method:'GET'|'PUT',sent?:{data:DiaryDocument;revision:number}):Promise<SyncEnvelope>{
+    const res=await fetch('/api/diary',{method,signal:AbortSignal.timeout(10000),headers:{Authorization:`Bearer ${this.key}`,'Content-Type':'application/json'},...(method==='PUT'?{body:JSON.stringify({revision:sent?.revision??this.revision,data:sent?.data??this.data()})}:{})});
     if(!res.ok)throw new Error('Sync failed');const envelope:SyncEnvelope=await res.json();envelope.data=normalizeDiaryColors(envelope.data);return envelope;
   }
   async resolveConflict(useLocal:boolean){
