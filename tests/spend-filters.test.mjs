@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { loadSource } from './load-source.mjs';
 const {filterDiary,entryRelations}=await loadSource('spend-filters');
-const {addCategory,removeCategory,categoriesOf,categoryName,lastCategoryForStore}=await loadSource('categories');
+const {addCategory,removeCategory,categoriesOf,categoryName,lastCategoryForStore,setStoreCategory,entryCategoryId}=await loadSource('categories');
+const {removeCatalogItem}=await loadSource('catalog');
 const {applyDay,newDraft}=await loadSource('entries');
 const {setPersonRelation}=await loadSource('catalog');
 const {mergeDiary}=await loadSource('merge');
@@ -10,7 +11,7 @@ const {parseBackup,createBackup}=await loadSource('backup');
 const empty=()=>({schemaVersion:1,stores:[],people:[],days:[],settings:{currency:'INR',weekStart:'sunday',showDailyTotals:false}});
 const draft=(patch)=>({...newDraft(),storeName:'Shop',amount:10,...patch});
 function sample(){
-  let d=applyDay(empty(),'2026-11-01',[draft({personNames:['Mum'],categoryId:'food',amount:30}),draft({personNames:['Raj'],categoryId:'clothing',amount:20}),draft({categoryId:'food',amount:5})]);
+  let d=applyDay(empty(),'2026-11-01',[draft({storeName:'Grocer',personNames:['Mum'],categoryId:'food',amount:30}),draft({storeName:'Tailor',personNames:['Raj'],categoryId:'clothing',amount:20}),draft({storeName:'Cafe',categoryId:'food',amount:5})]);
   d=setPersonRelation(d,d.people.find(p=>p.name==='Mum').id,'family');
   d=setPersonRelation(d,d.people.find(p=>p.name==='Raj').id,'friends');
   return d;
@@ -50,9 +51,11 @@ test('categories: defaults until edited, no duplicates, removal keeps the entry 
   const resaved=applyDay(gone,'2026-11-01',[{...gone.days[0].entries[0],amount:11}]);
   assert.equal(resaved.days[0].entries[0].categoryId,id);assert.equal(resaved.days[0].entries[0].categoryName,'Pets');
 });
-test('a store remembers its last category',()=>{
+test('an unlinked store remembers its last category; a new store links on first use',()=>{
   const d=applyDay(empty(),'2026-11-01',[draft({categoryId:'food'})]);
-  const d2=applyDay(d,'2026-11-05',[draft({storeId:d.stores[0].id,categoryId:'clothing'})]);
+  assert.equal(d.stores[0].categoryId,'food');
+  const loose=setStoreCategory(d,d.stores[0].id,'');
+  const d2=applyDay(loose,'2026-11-05',[draft({storeId:d.stores[0].id,categoryId:'clothing'})]);
   assert.equal(lastCategoryForStore(d2,d.stores[0].id),'clothing');assert.equal(lastCategoryForStore(d2,'other'),'');
 });
 test('backup round trip keeps relations and categories and rejects bad values',()=>{
@@ -68,4 +71,34 @@ test('categories merge from both devices; same-id divergence conflicts',()=>{
   assert.equal(mergeDiary(base,a,b).categories.length,9);
   assert.equal(mergeDiary(base,base,b).categories.length,8);
   assert.equal('categories' in mergeDiary(base,base,base),false);
+});
+
+test('a store linked to a category decides the category of its expenses, past and future',()=>{
+  let d=applyDay(empty(),'2026-11-01',[draft({storeName:'Bakery',categoryId:'clothing'}),draft({storeName:'Cafe',categoryId:'food'})]);
+  const bakery=d.stores.find(s=>s.name==='Bakery');
+  assert.equal(bakery.categoryId,'clothing');
+  d=setStoreCategory(d,bakery.id,'food');
+  assert.equal(filterDiary(d,{relation:'',category:'food'}).days[0].entryCount,2);
+  assert.equal(entryCategoryId(d,d.days[0].entries[0]),'food');
+  const again=applyDay(d,'2026-11-02',[draft({storeId:bakery.id,storeName:'Bakery',categoryId:'bills'})]);
+  assert.equal(again.days.at(-1).entries[0].categoryId,'food');
+  assert.equal(lastCategoryForStore(d,bakery.id),'food');
+  assert.equal(setStoreCategory(d,bakery.id,'').stores.find(s=>s.id===bakery.id).categoryId,undefined);
+  assert.throws(()=>setStoreCategory(d,bakery.id,'nope'));assert.throws(()=>setStoreCategory(d,'missing','food'));
+});
+test('removing a linked category or store keeps past expenses under the old category name',()=>{
+  let d=addCategory(empty(),'Pets');const pets=d.categories.at(-1).id;
+  d=applyDay(d,'2026-11-01',[draft({storeName:'Vet',categoryId:pets})]);
+  const vet=d.stores[0];
+  const gone=removeCategory(d,pets);
+  assert.equal(gone.stores[0].categoryId,undefined);assert.equal(categoryName(gone,gone.days[0].entries[0]),'Pets');
+  assert.equal(filterDiary(gone,{relation:'',category:pets}).days.length,1);
+  const moved=setStoreCategory(d,vet.id,'food');
+  const removed=removeCatalogItem(moved,'stores',vet.id);
+  assert.equal(removed.days[0].entries[0].categoryId,'food');assert.equal(filterDiary(removed,{relation:'',category:'food'}).days.length,1);
+});
+test('backup keeps the store category link',()=>{
+  const d=applyDay(empty(),'2026-11-01',[draft({categoryId:'food'})]);
+  const {diary}=parseBackup(JSON.stringify(createBackup(d)));
+  assert.equal(diary.stores[0].categoryId,'food');
 });

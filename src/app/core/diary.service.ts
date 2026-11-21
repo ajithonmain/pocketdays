@@ -3,7 +3,7 @@ import { Injectable, signal } from '@angular/core';
 import { DiaryDocument, emptyDiary, Relation, SyncEnvelope } from './models';
 import { applyDay, EntryDraft } from './entries';
 import { addCatalogItem, CatalogKind, removeCatalogItem, renameCatalogItem, setPersonRelation } from './catalog';
-import { addCategory, removeCategory } from './categories';
+import { addCategory, removeCategory, setStoreCategory } from './categories';
 import { mergeDiary } from './merge';
 import { generatePairCode, openDiaryKey, pairingId, sealDiaryKey } from './pairing';
 interface LocalRecord { data:DiaryDocument; revision:number; dirty:boolean; base?:DiaryDocument; }
@@ -54,6 +54,7 @@ export class DiaryService {
   }
   async addCategory(name: string) { await this.editCatalog(data => addCategory(data, name)); }
   async removeCategory(id: string) { await this.editCatalog(data => removeCategory(data, id)); }
+  async setStoreCategory(storeId: string, categoryId: string) { await this.editCatalog(data => setStoreCategory(data, storeId, categoryId)); }
   async setRelation(id: string, relation: Relation) { await this.editCatalog(data => setPersonRelation(data, id, relation)); }
   private async editCatalog(change: (data: DiaryDocument) => DiaryDocument) {
     if (!this.ready()) throw new Error('Diary is still opening.');

@@ -23,6 +23,8 @@ export class StoreSectionComponent {
   patch(value:Partial<EntryDraft>){this.changed.emit(value);}
   /** Saved categories, plus the entry's own if it was removed since. */
   categoryChoices(){const list=this.categories().map(c=>({id:c.id,name:c.name}));const e=this.entry();const id=e.categoryId||'others';if(!list.some(c=>c.id===id)&&e.categoryName)list.push({id,name:e.categoryName});return list;}
+  /** Name of the category the selected store is linked to, if any. The entry then follows the store. */
+  linkedCategory(){const id=this.stores().find(s=>s.id===this.entry().storeId)?.categoryId;return id?this.categories().find(c=>c.id===id)?.name??'':'';}
   categoryId(){return this.entry().categoryId||'others';}
   peopleNames(){return this.people().map(p=>p.name);}
 }

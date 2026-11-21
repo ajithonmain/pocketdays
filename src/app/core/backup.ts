@@ -37,6 +37,7 @@ function parseStore(v: unknown): StoreDocument {
   if (!isRecord(v)) return fail('A store is not valid.');
   const store: StoreDocument = { id: text(v['id'], 'A store id', 64), name: text(v['name'], 'A store name', 80), createdAt: text(v['createdAt'], 'A store date', 40) };
   const color = hex(v['color']); if (color) store.color = color;
+  if (v['categoryId'] !== undefined) store.categoryId = text(v['categoryId'], 'A store category id', 64);
   return store;
 }
 function parsePerson(v: unknown): PersonDocument {

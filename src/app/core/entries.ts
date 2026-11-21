@@ -12,10 +12,10 @@ export function applyDay(source:DiaryDocument,date:string,drafts:EntryDraft[]):D
   const person=(name:string)=>{let p=personByName(data,name);if(!p){p={id:crypto.randomUUID(),name:normalizeName(name),createdAt:now};data.people.push(p);}return p;};
   const categories=categoriesOf(data);
   const entries:EntryDocument[]=drafts.map(d=>{
-    const live=categories.find(c=>c.id===d.categoryId);const keep=!live&&!!d.categoryId&&d.categoryId!==FALLBACK_CATEGORY&&!!d.categoryName;
-    const categoryId=live?live.id:keep?d.categoryId:FALLBACK_CATEGORY;const categoryName=live?live.name:keep?d.categoryName!:(categories.find(c=>c.id===FALLBACK_CATEGORY)?.name??'Others');
     let store=data.stores.find(s=>s.id===d.storeId)||data.stores.find(s=>sameName(s.name,d.storeName));
-    if(!store){store={color:nextStoreColor(data.stores,d.storeName),id:crypto.randomUUID(),name:normalizeName(d.storeName),createdAt:now};data.stores.push(store);}
+    if(!store){store={color:nextStoreColor(data.stores,d.storeName),id:crypto.randomUUID(),name:normalizeName(d.storeName),createdAt:now};if(d.categoryId&&categories.some(c=>c.id===d.categoryId))store.categoryId=d.categoryId;data.stores.push(store);}
+    const live=categories.find(c=>c.id===store.categoryId)??categories.find(c=>c.id===d.categoryId);const keep=!live&&!!d.categoryId&&d.categoryId!==FALLBACK_CATEGORY&&!!d.categoryName;
+    const categoryId=live?live.id:keep?d.categoryId:FALLBACK_CATEGORY;const categoryName=live?live.name:keep?d.categoryName!:(categories.find(c=>c.id===FALLBACK_CATEGORY)?.name??'Others');
     const seen=new Map<string,string>();for(const n of d.personNames.map(normalizeName).filter(Boolean)){const k=n.toLocaleLowerCase();if(!seen.has(k))seen.set(k,n);}const people=[...seen.values()].map(person);
     if(!d.paidByMe)person(d.paidByName);
     return {...d,categoryId,categoryName,storeColor:store.color,storeId:store.id,storeName:store.name,amount:Math.round(d.amount!*100)/100,paidById:d.paidByMe?undefined:person(d.paidByName).id,paidByName:d.paidByMe?null:(person(d.paidByName).name),iOweThem:!d.paidByMe&&d.iOweThem,personIds:people.map(p=>p.id),personNames:people.map(p=>p.name),updatedAt:now};

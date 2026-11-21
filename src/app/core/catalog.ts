@@ -2,6 +2,7 @@ import { ensureStoreColors, nextStoreColor } from './store-colors';
 import { DiaryDocument, Relation } from './models';
 import { companionNames, payerName, personByName } from './entry-display';
 import { normalizeName, sameName } from './names';
+import { categoriesOf, entryCategoryId } from './categories';
 export type CatalogKind = 'stores' | 'people';
 export function addCatalogItem(source: DiaryDocument, kind: CatalogKind, value: string): DiaryDocument {
   const name = normalizeName(value);
@@ -20,7 +21,7 @@ export function removeCatalogItem(source: DiaryDocument, kind: CatalogKind, id: 
   if (kind === 'stores') {
     const store = next.stores.find(item => item.id === id);
     if (store) for (const day of next.days) for (const entry of day.entries) {
-      if (entry.storeId === id) { entry.storeName = store.name; if (!entry.storeColor) entry.storeColor = store.color; }
+      if (entry.storeId === id) { entry.storeName = store.name; if (!entry.storeColor) entry.storeColor = store.color; entry.categoryId = entryCategoryId(source, entry); entry.categoryName = categoriesOf(source).find(c => c.id === entry.categoryId)?.name ?? entry.categoryName; }
     }
   }
   if (kind === 'people') {

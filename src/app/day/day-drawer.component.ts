@@ -19,7 +19,7 @@ export class DayDrawerComponent implements OnDestroy {
   dateObject(){return new Date(this.date()+'T12:00:00');}
   add(mark=true){const e=newDraft();this.drafts.update(list=>[...list,e]);this.active.set(e.id);if(mark)this.dirty.set(true);}
   readonly categories=computed(()=>categoriesOf(this.diary.data()));
-  change(id:string,patch:Partial<EntryDraft>){this.drafts.update(list=>list.map(e=>{if(e.id!==id)return e;const next={...e,...patch};if(patch.storeId!==undefined&&!e.categoryId){const last=lastCategoryForStore(this.diary.data(),patch.storeId);if(last){next.categoryId=last;next.categoryName=this.categories().find(c=>c.id===last)?.name;}}return next;}));this.dirty.set(true);}
+  change(id:string,patch:Partial<EntryDraft>){this.drafts.update(list=>list.map(e=>{if(e.id!==id)return e;const next={...e,...patch};if(patch.storeId!==undefined&&(!e.categoryId||this.diary.data().stores.find(x=>x.id===patch.storeId)?.categoryId)){const last=lastCategoryForStore(this.diary.data(),patch.storeId);if(last){next.categoryId=last;next.categoryName=this.categories().find(c=>c.id===last)?.name;}}return next;}));this.dirty.set(true);}
   remove(id:string){this.drafts.update(list=>list.filter(e=>e.id!==id));if(this.active()===id)this.active.set(this.drafts()[0]?.id||'');this.dirty.set(true);}
   validation(e:EntryDraft){return this.submitted()?draftError(e):'';}
   async requestClose(){

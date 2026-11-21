@@ -18,7 +18,7 @@ import { DiaryService } from '../core/diary.service';
 export class CatalogSettingsComponent {
   readonly kind = input.required<CatalogKind | 'categories'>();
   readonly diary = inject(DiaryService);
-  readonly items = computed<{id: string; name: string; relation?: PersonDocument['relation']}[]>(() => this.kind() === 'categories' ? categoriesOf(this.diary.data()) : this.diary.data()[this.kind() as CatalogKind]);
+  readonly items = computed<{id: string; name: string; relation?: PersonDocument['relation']; categoryId?: string}[]>(() => this.kind() === 'categories' ? categoriesOf(this.diary.data()) : this.diary.data()[this.kind() as CatalogKind]);
   readonly noun = computed(() => this.kind() === 'stores' ? 'store' : this.kind() === 'people' ? 'person' : 'category');
   readonly busy = signal(false);
   readonly error = signal('');
@@ -35,6 +35,14 @@ export class CatalogSettingsComponent {
     finally { this.busy.set(false); }
   }
   readonly fallback = FALLBACK_CATEGORY;
+  readonly categoryChoices = computed(() => categoriesOf(this.diary.data()));
+  async setCategory(storeId: string, categoryId: string) {
+    if (this.busy()) return;
+    this.busy.set(true); this.error.set(''); this.message.set('');
+    try { await this.diary.setStoreCategory(storeId, categoryId); }
+    catch (error) { this.error.set(error instanceof Error ? error.message : 'Could not save. Retry.'); }
+    finally { this.busy.set(false); }
+  }
   relation(item: {relation?: PersonDocument['relation']}) { return relationLabel(item.relation); }
   async cycle(item: {id: string; relation?: PersonDocument['relation']}) {
     if (this.busy()) return;

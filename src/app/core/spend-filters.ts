@@ -1,5 +1,5 @@
 import { DiaryDocument, EntryDocument, Relation } from './models';
-import { FALLBACK_CATEGORY } from './categories';
+import { entryCategoryId } from './categories';
 import { personByName } from './entry-display';
 
 export const RELATIONS: { id: Relation; label: string }[] = [{ id: 'family', label: 'Family' }, { id: 'friends', label: 'Friends' }, { id: 'others', label: 'Others' }];
@@ -28,7 +28,7 @@ export function entryRelations(data: DiaryDocument, entry: EntryDocument): Set<R
 }
 
 export function matchesSpendFilter(data: DiaryDocument, entry: EntryDocument, filter: SpendFilter): boolean {
-  if (filter.category && (entry.categoryId || FALLBACK_CATEGORY) !== filter.category) return false;
+  if (filter.category && entryCategoryId(data, entry) !== filter.category) return false;
   return !filter.relation || entryRelations(data, entry).has(filter.relation);
 }
 

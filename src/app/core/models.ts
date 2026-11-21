@@ -1,4 +1,4 @@
-export interface StoreDocument { color?: string; id: string; name: string; createdAt: string; }
+export interface StoreDocument { /** Category every expense at this store counts under. */ categoryId?: string; color?: string; id: string; name: string; createdAt: string; }
 export type Relation = 'family' | 'friends' | 'others';
 export interface CategoryDocument { id: string; name: string; createdAt: string; }
 export interface PersonDocument { relation?: Relation; previousNames?: string[]; id: string; name: string; createdAt: string; }
