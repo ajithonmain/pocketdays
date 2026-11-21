@@ -1,8 +1,21 @@
 <header class="screen-head">
   <h1>Calendar</h1>
-  <div class="head-actions">
-    <button class="round-button" aria-label="Filters" (click)="openSheet()"><app-icon name="filter"/>@if(filters.active()){<i class="filter-dot" aria-hidden="true"></i>}</button>
+  <div class="head-actions filter-menu">
+    <button class="round-button" [class.active]="menuOpen()" aria-label="Filters" aria-haspopup="true" [attr.aria-expanded]="menuOpen()" (click)="toggleMenu()"><app-icon name="filter"/>@if(filters.active()){<i class="filter-dot" aria-hidden="true"></i>}</button>
     <button class="round-button" aria-label="Add expense" [disabled]="!diary.ready()" (click)="addNew()"><app-icon name="plus"/></button>
+    @if(menuOpen()){<div class="menu-panel" role="group" aria-label="Filters">
+      <p class="menu-label">Relation</p>
+      <div class="menu-pills" role="group" aria-label="Relation">
+        <button class="filter-chip" [attr.aria-pressed]="!filters.relation()" (click)="filters.relation.set('')">All</button>
+        @for(r of relations;track r.id){<button class="filter-chip" [attr.aria-pressed]="filters.relation()===r.id" (click)="filters.relation.set(r.id)">{{r.label}}</button>}
+      </div>
+      <p class="menu-label">Category</p>
+      <div class="menu-pills menu-scroll" role="group" aria-label="Category">
+        <button class="filter-chip" [attr.aria-pressed]="!filters.category()" (click)="filters.category.set('')">All</button>
+        @for(c of categories();track c.id){<button class="filter-chip" [attr.aria-pressed]="filters.category()===c.id" (click)="filters.category.set(c.id)">{{c.name}}</button>}
+      </div>
+      <button class="menu-reset" [disabled]="!filters.active()" (click)="filters.reset()">Reset</button>
+    </div>}
   </div>
 </header>
 @if(searching()){
@@ -63,10 +76,3 @@
 @if(results().length<resultCount()){<button class="text-button show-more" (click)="resultLimit.update(more)">Show more</button>}
 }
 
-@if(sheet()){
-  <p-drawer [visible]="true" (visibleChange)="!$event && closeSheet()" position="bottom" styleClass="day-drawer" [modal]="true" [blockScroll]="false" [showCloseIcon]="false" [style]="{height:'auto'}" transitionOptions="0ms">
-    <ng-template #header><div class="drawer-heading"><span class="drag-handle"></span><div class="drawer-row"><h3 class="sheet-title">Filters</h3><button class="icon-button" aria-label="Close filters" (click)="closeSheet()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="m4 4 8 8m0-8-8 8"/></svg></button></div></div></ng-template>
-    <div class="filter-sheet"><app-spend-filter-fields/></div>
-    <ng-template #footer><div class="sheet-actions"><button class="text-button" (click)="filters.reset()">Reset</button><button class="primary" (click)="closeSheet()">Done</button></div></ng-template>
-  </p-drawer>
-}

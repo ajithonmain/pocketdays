@@ -1,11 +1,11 @@
 import { Injectable, computed, signal } from '@angular/core';
 import { Relation } from './models';
 import { SpendFilter, spendFilterActive } from './spend-filters';
-/** Relation and category filter shared by the Calendar and Stores pages. Kept for the session only. */
+/** Relation and category filter shared by the Calendar and Stores pages. Starts as Friends and Food on every open; kept for the session only. */
 @Injectable({ providedIn: 'root' })
 export class SpendFilterService {
-  readonly relation = signal<Relation | ''>('');
-  readonly category = signal('');
+  readonly relation = signal<Relation | ''>('friends');
+  readonly category = signal('food');
   readonly filter = computed<SpendFilter>(() => ({ relation: this.relation(), category: this.category() }));
   readonly active = computed(() => spendFilterActive(this.filter()));
   reset() { this.relation.set(''); this.category.set(''); }

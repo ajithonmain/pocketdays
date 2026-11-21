@@ -1,6 +1,6 @@
 import { RouterLink } from '@angular/router';
 import { colorForStore, dayMarkers } from '../core/store-colors';
-import { Component, computed, inject, output, signal, input, effect, viewChild, ElementRef, untracked } from '@angular/core';
+import { Component, HostListener, computed, inject, output, signal, input, effect, viewChild, ElementRef, untracked } from '@angular/core';
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { EntryDocument } from '../core/models';
 import { DiaryService } from '../core/diary.service';
@@ -10,20 +10,23 @@ import { searchEntries } from '../core/entry-search';
 import { displayEntry } from '../core/entry-display';
 import { SpendFilterService } from '../core/spend-filter.service';
 import { filterDiary } from '../core/spend-filters';
-import { DrawerModule } from 'primeng/drawer';
-import { SpendFilterFieldsComponent } from '../shared/spend-filter-fields.component';
+import { categoriesOf } from '../core/categories';
+import { RELATIONS } from '../core/spend-filters';
 export const dateKey=localDateKey;
-@Component({selector:'app-calendar',imports:[CurrencyPipe,DatePipe,IconComponent,RouterLink,DrawerModule,SpendFilterFieldsComponent],templateUrl:'./calendar.component.html'})
+@Component({selector:'app-calendar',imports:[CurrencyPipe,DatePipe,IconComponent,RouterLink],templateUrl:'./calendar.component.html'})
 export class CalendarComponent {
   readonly initialFocus=input<CalendarFocus|null>(null);readonly focusEntry=output<CalendarFocus>();readonly notice=output<string>();
   readonly searching=signal(false);readonly query=signal('');readonly resultLimit=signal(100);
   readonly searchField=viewChild<ElementRef<HTMLInputElement>>('searchField');readonly searchButton=viewChild<ElementRef<HTMLButtonElement>>('searchButton');
   readonly filters=inject(SpendFilterService);
   /** The diary as the filters show it. Editing always uses the full diary. */
-  readonly sheet=signal(false);private sheetTimer?:ReturnType<typeof setTimeout>;
-  openSheet(){this.sheet.set(true);}
-  closeSheet(){document.body.classList.add('sheet-closing');clearTimeout(this.sheetTimer);this.sheetTimer=setTimeout(()=>{this.sheet.set(false);document.body.classList.remove('sheet-closing');},300);}
-  ngOnDestroy(){clearTimeout(this.sheetTimer);document.body.classList.remove('sheet-closing');}
+  readonly menuOpen=signal(false);readonly relations=RELATIONS;
+  readonly categories=computed(()=>categoriesOf(this.diary.data()));
+  toggleMenu(){this.menuOpen.update(v=>!v);}
+  closeMenu(){this.menuOpen.set(false);}
+  /** Close the filter menu on a tap outside it or on Escape. */
+  @HostListener('document:click',['$event'])outside(e:Event){if(this.menuOpen()&&!(e.target as Element).closest('.filter-menu'))this.closeMenu();}
+  @HostListener('document:keydown.escape')escape(){this.closeMenu();}
   readonly view=computed(()=>filterDiary(this.diary.data(),this.filters.filter()));
   private readonly matches=computed(()=>searchEntries(this.view(),this.query(),Number.MAX_SAFE_INTEGER));
   readonly results=computed(()=>this.matches().slice(0,this.resultLimit()));
