@@ -2,6 +2,7 @@
   <h1>Calendar</h1>
   <button class="round-button" aria-label="Add expense" [disabled]="!diary.ready()" (click)="addNew()"><app-icon name="plus"/></button>
 </header>
+<app-spend-filter-bar/>
 @if(searching()){
 <div class="calendar-search"><label class="search-field"><span class="sr-only">Search expenses</span><input #searchField type="search" aria-label="Search expenses" placeholder="Store, note, person or amount" [value]="query()" (input)="setQuery($event)" (keydown.escape)="toggleSearch()"></label><button class="text-button" (click)="toggleSearch()">Close</button></div>
 }
@@ -34,7 +35,7 @@
       <span class="entry-amount">{{entry.amount | currency:diary.data().settings.currency:'symbol':'1.0-2'}}</span>
     </button>
   }@empty{
-    <button class="entry-card empty" [disabled]="!diary.ready()" (click)="addNew()"><span class="entry-text"><strong>{{diary.ready() ? 'Nothing logged' : 'Opening diary…'}}</strong><small>Tap to add an expense</small></span></button>
+    <button class="entry-card empty" [disabled]="!diary.ready()" (click)="addNew()"><span class="entry-text"><strong>{{diary.ready() ? (filters.active() ? 'Nothing matches' : 'Nothing logged') : 'Opening diary…'}}</strong><small>{{filters.active() ? 'Change the filters or tap to add' : 'Tap to add an expense'}}</small></span></button>
   }
   </div>
 </section>

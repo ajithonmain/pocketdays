@@ -7,6 +7,7 @@ function sourceUrl(file){
   const source=readFileSync(file,'utf8');
   let js=ts.transpileModule(source,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText;
   js=js.replace(/from ['"](\.[^'"]+)['"]/g,(_,dependency)=>`from '${sourceUrl(new URL(dependency.endsWith('.ts')?dependency:dependency+'.ts',file))}'`);
+  js=js.replace(/from ['"]@angular\/core['"]/g,()=>`from '${import.meta.resolve('@angular/core')}'`);
   const url='data:text/javascript;base64,'+Buffer.from(js).toString('base64');cache.set(key,url);return url;
 }
 export function loadSource(name){return import(sourceUrl(new URL(`../src/app/core/${name}.ts`,import.meta.url)));}

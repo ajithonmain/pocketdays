@@ -19,6 +19,7 @@ export function mergeDiary(base: DiaryDocument, local: DiaryDocument, remote: Di
   merged.days = mergeList(base.days, local.days, remote.days, day => day.date);
   merged.stores = mergeList(base.stores, local.stores, remote.stores, item => item.id);
   merged.people = mergeList(base.people, local.people, remote.people, item => item.id);
+  if (base.categories || local.categories || remote.categories) merged.categories = mergeList(base.categories ?? [], local.categories ?? [], remote.categories ?? [], item => item.id);
   if (!equal(local.settings, base.settings)) {
     if (!equal(remote.settings, base.settings) && !equal(remote.settings, local.settings)) throw new Error('Sync conflict');
     merged.settings = structuredClone(local.settings);

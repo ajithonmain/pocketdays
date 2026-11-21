@@ -4,7 +4,7 @@ A quiet, mobile-first expense diary. The calendar is the home screen: tap a date
 
 No accounts, no ads, no analytics, no third-party fonts, no trackers.
 
-> Status: early and actively developed. The app builds and its 63 tests pass, but live cloud sync on a real deployment, installation on physical devices and Lighthouse scores have not been verified yet.
+> Status: early and actively developed. The app builds and its 71 tests pass, but live cloud sync on a real deployment, installation on physical devices and Lighthouse scores have not been verified yet.
 
 ## Features
 

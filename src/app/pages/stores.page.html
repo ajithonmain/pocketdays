@@ -10,6 +10,7 @@
     <button class="round-button" aria-label="Filters" (click)="openSheet()"><app-icon name="filter"/>@if(customised()){<i class="filter-dot" aria-hidden="true"></i>}</button>
   </div>
 </header>
+<app-spend-filter-bar/>
 
 @if(searching()){
   <label class="search-field"><span class="sr-only">Search names</span>

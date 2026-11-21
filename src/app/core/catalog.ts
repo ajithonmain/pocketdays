@@ -1,5 +1,5 @@
 import { ensureStoreColors, nextStoreColor } from './store-colors';
-import { DiaryDocument } from './models';
+import { DiaryDocument, Relation } from './models';
 import { companionNames, payerName, personByName } from './entry-display';
 import { normalizeName, sameName } from './names';
 export type CatalogKind = 'stores' | 'people';
@@ -57,3 +57,10 @@ export function renameCatalogItem(source: DiaryDocument, kind: CatalogKind, id: 
   return next;
 }
 export const renameStore=(source:DiaryDocument,id:string,name:string)=>renameCatalogItem(source,'stores',id,name);
+
+export function setPersonRelation(source: DiaryDocument, id: string, relation: Relation): DiaryDocument {
+  if (!source.people.some(p => p.id === id)) throw new Error('This saved name was removed.');
+  const next = structuredClone(source);
+  next.people.find(p => p.id === id)!.relation = relation;
+  return next;
+}

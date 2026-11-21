@@ -8,30 +8,36 @@ import { IconComponent } from '../shared/icon.component';
 import { CalendarFocus, localDateKey, isAwayFromToday } from '../core/calendar-navigation';
 import { searchEntries } from '../core/entry-search';
 import { displayEntry } from '../core/entry-display';
+import { SpendFilterService } from '../core/spend-filter.service';
+import { filterDiary } from '../core/spend-filters';
+import { SpendFilterBarComponent } from '../shared/spend-filter-bar.component';
 export const dateKey=localDateKey;
-@Component({selector:'app-calendar',imports:[CurrencyPipe,DatePipe,IconComponent,RouterLink],templateUrl:'./calendar.component.html'})
+@Component({selector:'app-calendar',imports:[CurrencyPipe,DatePipe,IconComponent,RouterLink,SpendFilterBarComponent],templateUrl:'./calendar.component.html'})
 export class CalendarComponent {
   readonly initialFocus=input<CalendarFocus|null>(null);readonly focusEntry=output<CalendarFocus>();readonly notice=output<string>();
   readonly searching=signal(false);readonly query=signal('');readonly resultLimit=signal(100);
   readonly searchField=viewChild<ElementRef<HTMLInputElement>>('searchField');readonly searchButton=viewChild<ElementRef<HTMLButtonElement>>('searchButton');
-  private readonly matches=computed(()=>searchEntries(this.diary.data(),this.query(),Number.MAX_SAFE_INTEGER));
+  readonly filters=inject(SpendFilterService);
+  /** The diary as the filters show it. Editing always uses the full diary. */
+  readonly view=computed(()=>filterDiary(this.diary.data(),this.filters.filter()));
+  private readonly matches=computed(()=>searchEntries(this.view(),this.query(),Number.MAX_SAFE_INTEGER));
   readonly results=computed(()=>this.matches().slice(0,this.resultLimit()));
   readonly resultCount=computed(()=>this.matches().length);
   constructor(){effect(()=>{const focus=this.initialFocus();if(focus && this.diary.ready())untracked(()=>this.openFocused(focus));});}
   readonly Math=Math;readonly diary=inject(DiaryService);readonly open=output<string>();readonly add=output<string>();readonly today=signal(dateKey(new Date()));
   readonly month=signal(new Date(new Date().getFullYear(),new Date().getMonth(),1));readonly selected=signal(dateKey(new Date()));
   readonly weekdays=computed(()=>['Sun','Mon','Tue','Wed','Thu','Fri','Sat']);
-  readonly days=computed(()=>{const d=this.month();const offset=d.getDay();return Array.from({length:Math.ceil((offset+new Date(d.getFullYear(),d.getMonth()+1,0).getDate())/7)*7},(_,i)=>{const date=new Date(d.getFullYear(),d.getMonth(),i-offset+1);const key=dateKey(date);return {key,date,inMonth:date.getMonth()===d.getMonth(),record:this.diary.data().days.find(x=>x.date===key),markers:dayMarkers(this.diary.data().days.find(x=>x.date===key),this.diary.data().stores)};});});
-  readonly selectedEntries=computed(()=>this.diary.data().days.find(d=>d.date===this.selected())?.entries??[]);
+  readonly days=computed(()=>{const d=this.month();const offset=d.getDay();return Array.from({length:Math.ceil((offset+new Date(d.getFullYear(),d.getMonth()+1,0).getDate())/7)*7},(_,i)=>{const date=new Date(d.getFullYear(),d.getMonth(),i-offset+1);const key=dateKey(date);return {key,date,inMonth:date.getMonth()===d.getMonth(),record:this.view().days.find(x=>x.date===key),markers:dayMarkers(this.view().days.find(x=>x.date===key),this.diary.data().stores)};});});
+  readonly selectedEntries=computed(()=>this.view().days.find(d=>d.date===this.selected())?.entries??[]);
   readonly selectedTotal=computed(()=>this.selectedEntries().reduce((sum,e)=>sum+(e.amount||0),0));
   readonly selectedDate=computed(()=>new Date(this.selected()+'T12:00:00'));
   colorFor(entry:EntryDocument){const id=entry.storeId||entry.storeName;const store=this.diary.data().stores.find(item=>item.id===id);return store?colorForStore(store):colorForStore({id,color:entry.storeColor});}
   payer(entry:EntryDocument){const e=displayEntry(this.diary.data(),entry);return e.paidByMe?'Me':(e.paidByName||'Other');}
   readonly awayFromToday=computed(()=>isAwayFromToday(this.month(),this.selected(),this.today()));
-  readonly summary=computed(()=>{const prefix=dateKey(this.month()).slice(0,7);const days=this.diary.data().days.filter(d=>d.date.startsWith(prefix)&&d.entryCount);return {total:days.reduce((s,d)=>s+d.total,0),count:days.length};});
+  readonly summary=computed(()=>{const prefix=dateKey(this.month()).slice(0,7);const days=this.view().days.filter(d=>d.date.startsWith(prefix)&&d.entryCount);return {total:days.reduce((s,d)=>s+d.total,0),count:days.length};});
   readonly legend=computed(()=>{
     const prefix=dateKey(this.month()).slice(0,7);
-    const items=this.diary.data().days.filter(day=>day.date.startsWith(prefix)).flatMap(day=>dayMarkers(day,this.diary.data().stores));
+    const items=this.view().days.filter(day=>day.date.startsWith(prefix)).flatMap(day=>dayMarkers(day,this.diary.data().stores));
     return [...new Map(items.map(item=>[item.id,item])).values()];
   });
   ringDash(total:number,i:number){const n=Math.min(total,6);const seg=100/n;return (seg-3.6)+' '+(100-seg+3.6);}

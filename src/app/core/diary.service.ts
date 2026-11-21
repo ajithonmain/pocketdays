@@ -1,8 +1,9 @@
 import { normalizeDiaryColors } from './store-colors';
 import { Injectable, signal } from '@angular/core';
-import { DiaryDocument, emptyDiary, SyncEnvelope } from './models';
+import { DiaryDocument, emptyDiary, Relation, SyncEnvelope } from './models';
 import { applyDay, EntryDraft } from './entries';
-import { addCatalogItem, CatalogKind, removeCatalogItem, renameCatalogItem } from './catalog';
+import { addCatalogItem, CatalogKind, removeCatalogItem, renameCatalogItem, setPersonRelation } from './catalog';
+import { addCategory, removeCategory } from './categories';
 import { mergeDiary } from './merge';
 import { generatePairCode, openDiaryKey, pairingId, sealDiaryKey } from './pairing';
 interface LocalRecord { data:DiaryDocument; revision:number; dirty:boolean; base?:DiaryDocument; }
@@ -51,6 +52,9 @@ export class DiaryService {
   async renameCatalog(kind: CatalogKind, id: string, name: string, originalName: string) {
     await this.editCatalog(data => renameCatalogItem(data, kind, id, name, originalName));
   }
+  async addCategory(name: string) { await this.editCatalog(data => addCategory(data, name)); }
+  async removeCategory(id: string) { await this.editCatalog(data => removeCategory(data, id)); }
+  async setRelation(id: string, relation: Relation) { await this.editCatalog(data => setPersonRelation(data, id, relation)); }
   private async editCatalog(change: (data: DiaryDocument) => DiaryDocument) {
     if (!this.ready()) throw new Error('Diary is still opening.');
     await this.lock(async () => {
@@ -87,12 +91,20 @@ export class DiaryService {
       const remote=await this.request('GET');
       const sent=await this.lock(async()=>{
         await this.load();
+        if (remote.revision < this.revision) {
+          again = true;
+          return null;
+        }
         if(!this.pending()){this.data.set(remote.data);this.revision=remote.revision;this.base=structuredClone(remote.data);this.conflict.set(false);await this.persist();return null;}
         if(remote.revision!==this.revision){
           let merged: DiaryDocument;
           try { merged = mergeDiary(this.base, this.data(), remote.data); }
           catch { this.conflict.set(true);this.status.set('Sync conflict');this.error.set('Changed on another device. Pick a copy in Settings.');return null; }
-          this.data.set(merged);this.revision=remote.revision;
+          this.data.set(merged);
+          this.revision = remote.revision;
+          this.base = structuredClone(remote.data);
+          // Edits made during the upload must start from the merged diary.
+          await this.persist();
         }
         return {data:this.data(),revision:this.revision};
       });
@@ -100,6 +112,10 @@ export class DiaryService {
         const saved=await this.request('PUT',sent);
         await this.lock(async()=>{
           await this.load();
+          if (this.revision >= saved.revision) {
+            again = this.pending();
+            return;
+          }
           this.revision=saved.revision;this.base=structuredClone(saved.data);
           if(JSON.stringify(this.data())===JSON.stringify(sent.data)){this.data.set(saved.data);this.pending.set(false);}
           else{again=true;}

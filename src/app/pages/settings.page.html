@@ -6,6 +6,7 @@
   <div class="panel list-panel">
     <button class="row row-button" (click)="open('stores')"><span class="row-main"><strong>Stores</strong><small>Shown when logging</small></span><span class="row-value">{{diary.data().stores.length}}</span><app-icon class="chev" name="arrow"/></button>
     <button class="row row-button" (click)="open('people')"><span class="row-main"><strong>People</strong><small>Suggested as you type</small></span><span class="row-value">{{diary.data().people.length}}</span><app-icon class="chev" name="arrow"/></button>
+    <button class="row row-button" (click)="open('categories')"><span class="row-main"><strong>Categories</strong><small>Food, clothing and more</small></span><span class="row-value">{{categoryCount()}}</span><app-icon class="chev" name="arrow"/></button>
   </div>
 </section>
 
@@ -45,7 +46,7 @@
 
 @if(managing(); as kind){
   <p-drawer [visible]="true" (visibleChange)="!$event && close()" position="bottom" styleClass="day-drawer" [modal]="true" [blockScroll]="false" [showCloseIcon]="false" [style]="{height:'auto', maxHeight:'85dvh'}" transitionOptions="0ms">
-    <ng-template #header><div class="drawer-heading"><span class="drag-handle"></span><div class="drawer-row"><h3 class="sheet-title">{{kind==='stores' ? 'Stores' : 'People'}}</h3><button class="icon-button" aria-label="Close" (click)="close()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="m4 4 8 8m0-8-8 8"/></svg></button></div></div></ng-template>
+    <ng-template #header><div class="drawer-heading"><span class="drag-handle"></span><div class="drawer-row"><h3 class="sheet-title">{{kind==='stores' ? 'Stores' : kind==='people' ? 'People' : 'Categories'}}</h3><button class="icon-button" aria-label="Close" (click)="close()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="m4 4 8 8m0-8-8 8"/></svg></button></div></div></ng-template>
     <div class="filter-sheet"><app-catalog-settings [kind]="kind"/></div>
   </p-drawer>
 }
