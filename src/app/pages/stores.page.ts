@@ -7,6 +7,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { DrawerModule } from 'primeng/drawer';
 import { DiaryService } from '../core/diary.service';
 import { Payer, Sort, storeRows } from '../core/store-stats';
+import { spendTotals } from '../core/totals';
 import { IconComponent } from '../shared/icon.component';
 import { SpendFilterService } from '../core/spend-filter.service';
 import { filterDiary } from '../core/spend-filters';
@@ -27,6 +28,9 @@ export class StoresPage {
   readonly payers: { id: Payer; label: string }[] = [{ id: 'all', label: 'Everyone' }, { id: 'me', label: 'Me' }, { id: 'others', label: 'Others' }];
   readonly sorts: { id: Sort; label: string }[] = [{ id: 'spent', label: 'Most spent' }, { id: 'visits', label: 'Most visits' }, { id: 'recent', label: 'Latest' }, { id: 'name', label: 'A to Z' }];
 
+  readonly totals = computed(() => spendTotals(this.diary.data(), { period: this.period(), payer: this.payer(), person: this.person() }, this.anchor()));
+  share(amount: number) { const t = this.totals().total; return t ? Math.round(amount / t * 100) : 0; }
+  modeIndex() { return this.mode() === 'stores' ? 0 : this.mode() === 'people' ? 1 : 2; }
   readonly rows = computed(() => (this.mode()==='stores'?storeRows:personRows)(filterDiary(this.diary.data(), this.spend.filter()), { period: this.period(), payer: this.payer(), sort: this.sort(), query: this.query(), person: this.person() }, this.anchor()));
   /** Saved people sorted by name, plus the active person if they were removed since. */
   readonly people = computed(() => {

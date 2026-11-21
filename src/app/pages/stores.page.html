@@ -1,4 +1,4 @@
-<div class="segmented history-mode" style="--n:2" [style.--i]="mode()==='stores'?0:1" role="group" aria-label="History type"><button [attr.aria-pressed]="mode()==='stores'" (click)="mode.set('stores')">Stores</button><button [attr.aria-pressed]="mode()==='people'" (click)="mode.set('people')">People</button></div>
+<div class="segmented history-mode" style="--n:3" [style.--i]="modeIndex()" role="group" aria-label="History type"><button [attr.aria-pressed]="mode()==='stores'" (click)="mode.set('stores')">Stores</button><button [attr.aria-pressed]="mode()==='people'" (click)="mode.set('people')">People</button><button [attr.aria-pressed]="mode()==='totals'" (click)="mode.set('totals')">Totals</button></div>
 <header class="screen-head stores-head">
   <div class="period-nav">
     <button class="icon-button previous" aria-label="Previous" [disabled]="period()==='all'" (click)="step(-1)"><app-icon name="arrow"/></button>
@@ -22,6 +22,16 @@
   <span>{{countLabel(summary().visits)}}{{filtered() ? ' · filtered' : ''}}</span>
 </div>}
 
+@if(mode()==='totals'){
+  <div class="stores-summary" aria-live="polite"><strong>{{totals().total | currency:diary.data().settings.currency:'symbol':'1.0-2'}}</strong><span>{{totals().count===1?'1 expense':totals().count+' expenses'}}{{payer()!=='all'||person()?' · filtered':''}}</span></div>
+  @if(totals().count){
+    <h2 class="group-label totals-label">By category</h2>
+    <div class="panel list-panel">@for(row of totals().byCategory;track row.id){<div class="row total-row"><span class="row-main"><strong>{{row.name}}</strong><small>{{row.count===1?'1 expense':row.count+' expenses'}} · {{share(row.total)}}%</small><i class="total-bar" [style.width.%]="share(row.total)" aria-hidden="true"></i></span><span class="row-amount">{{row.total | currency:diary.data().settings.currency:'symbol':'1.0-2'}}</span></div>}</div>
+    <h2 class="group-label totals-label">By relation</h2>
+    <div class="panel list-panel">@for(row of totals().byRelation;track row.id){<div class="row total-row"><span class="row-main"><strong>{{row.name}}</strong><small>{{row.count===1?'1 expense':row.count+' expenses'}} · {{share(row.total)}}%</small><i class="total-bar" [style.width.%]="share(row.total)" aria-hidden="true"></i></span><span class="row-amount">{{row.total | currency:diary.data().settings.currency:'symbol':'1.0-2'}}</span></div>}</div>
+    <p class="group-note">An expense with people from two relations counts under both. Relation and category filters are not applied here.</p>
+  }@else{<p class="calendar-note">No spends in this range.</p>}
+}@else{
 @if(rows().length){
   <div class="panel list-panel">
     @for(row of rows(); track row.id; let i=$index){
@@ -35,6 +45,7 @@
 } @else {
   <p class="calendar-note">{{mode()==='people'?'No people match this range.':emptyText()}}</p>
 }
+}
 
 @if(sheet()){
   <p-drawer [visible]="true" (visibleChange)="!$event && closeSheet()" position="bottom" styleClass="day-drawer" [modal]="true" [blockScroll]="false" [showCloseIcon]="false" [style]="{height:'auto'}" transitionOptions="0ms">
@@ -45,9 +56,9 @@
       <div class="segmented" style="--n:3" [style.--i]="payerIndex()" role="group" aria-label="Paid by">@for(p of payers; track p.id){<button [attr.aria-pressed]="payer()===p.id" (click)="payer.set(p.id)">{{p.label}}</button>}</div>
       <p class="group-label">Person</p>
       <div class="chip-wrap" role="group" aria-label="Person"><button class="filter-chip" [attr.aria-pressed]="person()===''" (click)="person.set('')">Anyone</button>@for(name of people(); track name){<button class="filter-chip" [attr.aria-pressed]="person()===name" (click)="person.set(name)">{{name}}</button>}</div>
-      <app-spend-filter-fields/>
+      @if(mode()!=='totals'){<app-spend-filter-fields/>
       <p class="group-label">Sort by</p>
-      <div class="panel list-panel option-list" role="radiogroup" aria-label="Sort by">@for(s of sorts; track s.id){<button class="option-row" role="radio" [attr.aria-checked]="sort()===s.id" (click)="sort.set(s.id)">{{s.id==='visits' && mode()==='people'?'Most together':s.label}}@if(sort()===s.id){<app-icon name="check"/>}</button>}</div>
+      <div class="panel list-panel option-list" role="radiogroup" aria-label="Sort by">@for(s of sorts; track s.id){<button class="option-row" role="radio" [attr.aria-checked]="sort()===s.id" (click)="sort.set(s.id)">{{s.id==='visits' && mode()==='people'?'Most together':s.label}}@if(sort()===s.id){<app-icon name="check"/>}</button>}</div>}
     </div>
     <ng-template #footer><div class="sheet-actions"><button class="text-button" (click)="reset()">Reset</button><button class="primary" (click)="closeSheet()">Done</button></div></ng-template>
   </p-drawer>

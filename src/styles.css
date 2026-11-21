@@ -531,3 +531,6 @@ a.mini-chip-name { display:inline-flex; align-items:center; min-height:44px; col
 .menu-reset { width: 100%; min-height: 36px; margin-top: 4px; padding: 0; border: 0; border-top: 1px solid var(--line); background: transparent; font-size: 14px; color: var(--muted); text-align: left; }
 .menu-reset:disabled { opacity: .4; }
 select.relation-tag { max-width: 112px; appearance: none; text-overflow: ellipsis; text-align: center; color: var(--text); }
+.totals-label { margin: 22px 4px 8px; }
+.total-row .row-main { position: relative; padding-bottom: 8px; }
+.total-bar { position: absolute; left: 0; bottom: 0; height: 3px; min-width: 2px; border-radius: 2px; background: var(--text); opacity: .85; }
