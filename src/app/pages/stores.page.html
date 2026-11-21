@@ -10,7 +10,6 @@
     <button class="round-button" aria-label="Filters" (click)="openSheet()"><app-icon name="filter"/>@if(customised()){<i class="filter-dot" aria-hidden="true"></i>}</button>
   </div>
 </header>
-<app-spend-filter-bar/>
 
 @if(searching()){
   <label class="search-field"><span class="sr-only">Search names</span>
@@ -46,6 +45,7 @@
       <div class="segmented" style="--n:3" [style.--i]="payerIndex()" role="group" aria-label="Paid by">@for(p of payers; track p.id){<button [attr.aria-pressed]="payer()===p.id" (click)="payer.set(p.id)">{{p.label}}</button>}</div>
       <p class="group-label">Person</p>
       <div class="chip-wrap" role="group" aria-label="Person"><button class="filter-chip" [attr.aria-pressed]="person()===''" (click)="person.set('')">Anyone</button>@for(name of people(); track name){<button class="filter-chip" [attr.aria-pressed]="person()===name" (click)="person.set(name)">{{name}}</button>}</div>
+      <app-spend-filter-fields/>
       <p class="group-label">Sort by</p>
       <div class="panel list-panel option-list" role="radiogroup" aria-label="Sort by">@for(s of sorts; track s.id){<button class="option-row" role="radio" [attr.aria-checked]="sort()===s.id" (click)="sort.set(s.id)">{{s.id==='visits' && mode()==='people'?'Most together':s.label}}@if(sort()===s.id){<app-icon name="check"/>}</button>}</div>
     </div>

@@ -10,9 +10,9 @@ import { Payer, Sort, storeRows } from '../core/store-stats';
 import { IconComponent } from '../shared/icon.component';
 import { SpendFilterService } from '../core/spend-filter.service';
 import { filterDiary } from '../core/spend-filters';
-import { SpendFilterBarComponent } from '../shared/spend-filter-bar.component';
+import { SpendFilterFieldsComponent } from '../shared/spend-filter-fields.component';
 
-@Component({ standalone: true, imports: [CurrencyPipe, DatePipe, DrawerModule, IconComponent, RangeControlsComponent, SpendFilterBarComponent], templateUrl: './stores.page.html' })
+@Component({ standalone: true, imports: [CurrencyPipe, DatePipe, DrawerModule, IconComponent, RangeControlsComponent, SpendFilterFieldsComponent], templateUrl: './stores.page.html' })
 export class StoresPage {
   readonly diary = inject(DiaryService);
   readonly state=inject(HistoryFiltersService);private router=inject(Router);
@@ -37,7 +37,7 @@ export class StoresPage {
   });
   readonly periodText = computed(() => this.period() === 'all' ? 'All time' : this.period() === 'year' ? String(this.anchor().getFullYear()) : this.anchor().toLocaleDateString('en-GB', { month: 'long', year: 'numeric' }));
   readonly summary = computed(() => ({ total: this.rows().reduce((s, r) => s + r.total, 0), visits: this.rows().reduce((s, r) => s + r.visits, 0) }));
-  readonly customised = computed(() => this.period() !== 'month' || this.payer() !== 'all' || this.sort() !== 'spent' || this.person() !== '');
+  readonly customised = computed(() => this.period() !== 'month' || this.payer() !== 'all' || this.sort() !== 'spent' || this.person() !== '' || this.spend.active());
   readonly filtered = computed(() => this.spend.active() || this.query().trim() !== '' || this.payer() !== 'all' || this.person() !== '');
   readonly navLabel = computed(() => this.period() === 'all' ? 'All time' : this.period() === 'year' ? String(this.anchor().getFullYear()) : '');
   readonly isMonth = computed(() => this.period() === 'month');
@@ -46,7 +46,7 @@ export class StoresPage {
   rowColor(row: {id:string;color?:string}) {return row.color??'var(--text)';}
   payerIndex() { return this.payers.findIndex(p => p.id === this.payer()); }
   step(direction:number) { this.state.step(direction); }
-  reset() { this.state.reset(); }
+  reset() { this.state.reset(); this.spend.reset(); }
   countLabel(count:number) {return this.mode()==='people'?(count===1?'1 order together':`${count} orders together`):(count===1?'1 visit':`${count} visits`);}
   lastDate(key: string) { return new Date(key + 'T12:00:00'); }
   setQuery(event: Event) { this.query.set((event.target as HTMLInputElement).value); }

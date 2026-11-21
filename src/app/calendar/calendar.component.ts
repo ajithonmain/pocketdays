@@ -10,15 +10,20 @@ import { searchEntries } from '../core/entry-search';
 import { displayEntry } from '../core/entry-display';
 import { SpendFilterService } from '../core/spend-filter.service';
 import { filterDiary } from '../core/spend-filters';
-import { SpendFilterBarComponent } from '../shared/spend-filter-bar.component';
+import { DrawerModule } from 'primeng/drawer';
+import { SpendFilterFieldsComponent } from '../shared/spend-filter-fields.component';
 export const dateKey=localDateKey;
-@Component({selector:'app-calendar',imports:[CurrencyPipe,DatePipe,IconComponent,RouterLink,SpendFilterBarComponent],templateUrl:'./calendar.component.html'})
+@Component({selector:'app-calendar',imports:[CurrencyPipe,DatePipe,IconComponent,RouterLink,DrawerModule,SpendFilterFieldsComponent],templateUrl:'./calendar.component.html'})
 export class CalendarComponent {
   readonly initialFocus=input<CalendarFocus|null>(null);readonly focusEntry=output<CalendarFocus>();readonly notice=output<string>();
   readonly searching=signal(false);readonly query=signal('');readonly resultLimit=signal(100);
   readonly searchField=viewChild<ElementRef<HTMLInputElement>>('searchField');readonly searchButton=viewChild<ElementRef<HTMLButtonElement>>('searchButton');
   readonly filters=inject(SpendFilterService);
   /** The diary as the filters show it. Editing always uses the full diary. */
+  readonly sheet=signal(false);private sheetTimer?:ReturnType<typeof setTimeout>;
+  openSheet(){this.sheet.set(true);}
+  closeSheet(){document.body.classList.add('sheet-closing');clearTimeout(this.sheetTimer);this.sheetTimer=setTimeout(()=>{this.sheet.set(false);document.body.classList.remove('sheet-closing');},300);}
+  ngOnDestroy(){clearTimeout(this.sheetTimer);document.body.classList.remove('sheet-closing');}
   readonly view=computed(()=>filterDiary(this.diary.data(),this.filters.filter()));
   private readonly matches=computed(()=>searchEntries(this.view(),this.query(),Number.MAX_SAFE_INTEGER));
   readonly results=computed(()=>this.matches().slice(0,this.resultLimit()));

@@ -1,8 +1,10 @@
 <header class="screen-head">
   <h1>Calendar</h1>
-  <button class="round-button" aria-label="Add expense" [disabled]="!diary.ready()" (click)="addNew()"><app-icon name="plus"/></button>
+  <div class="head-actions">
+    <button class="round-button" aria-label="Filters" (click)="openSheet()"><app-icon name="filter"/>@if(filters.active()){<i class="filter-dot" aria-hidden="true"></i>}</button>
+    <button class="round-button" aria-label="Add expense" [disabled]="!diary.ready()" (click)="addNew()"><app-icon name="plus"/></button>
+  </div>
 </header>
-<app-spend-filter-bar/>
 @if(searching()){
 <div class="calendar-search"><label class="search-field"><span class="sr-only">Search expenses</span><input #searchField type="search" aria-label="Search expenses" placeholder="Store, note, person or amount" [value]="query()" (input)="setQuery($event)" (keydown.escape)="toggleSearch()"></label><button class="text-button" (click)="toggleSearch()">Close</button></div>
 }
@@ -59,4 +61,12 @@
   }@empty{<li class="calendar-note">Nothing found.</li>}
 </ul>
 @if(results().length<resultCount()){<button class="text-button show-more" (click)="resultLimit.update(more)">Show more</button>}
+}
+
+@if(sheet()){
+  <p-drawer [visible]="true" (visibleChange)="!$event && closeSheet()" position="bottom" styleClass="day-drawer" [modal]="true" [blockScroll]="false" [showCloseIcon]="false" [style]="{height:'auto'}" transitionOptions="0ms">
+    <ng-template #header><div class="drawer-heading"><span class="drag-handle"></span><div class="drawer-row"><h3 class="sheet-title">Filters</h3><button class="icon-button" aria-label="Close filters" (click)="closeSheet()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="m4 4 8 8m0-8-8 8"/></svg></button></div></div></ng-template>
+    <div class="filter-sheet"><app-spend-filter-fields/></div>
+    <ng-template #footer><div class="sheet-actions"><button class="text-button" (click)="filters.reset()">Reset</button><button class="primary" (click)="closeSheet()">Done</button></div></ng-template>
+  </p-drawer>
 }
