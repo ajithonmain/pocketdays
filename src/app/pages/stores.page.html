@@ -26,9 +26,9 @@
   <div class="stores-summary" aria-live="polite"><strong>{{totals().total | currency:diary.data().settings.currency:'symbol':'1.0-2'}}</strong><span>{{totals().count===1?'1 expense':totals().count+' expenses'}}{{payer()!=='all'||person()?' · filtered':''}}</span></div>
   @if(totals().count){
     <h2 class="group-label totals-label">By category</h2>
-    <div class="panel list-panel">@for(row of totals().byCategory;track row.id){<div class="row total-row"><span class="row-main"><strong>{{row.name}}</strong><small>{{row.count===1?'1 expense':row.count+' expenses'}} · {{share(row.total)}}%</small><i class="total-bar" [style.width.%]="share(row.total)" aria-hidden="true"></i></span><span class="row-amount">{{row.total | currency:diary.data().settings.currency:'symbol':'1.0-2'}}</span></div>}</div>
+    <div class="panel list-panel">@for(row of totals().byCategory;track row.id){<button class="row row-button total-row" [attr.aria-label]="row.name+', '+row.count+' expenses, see where it comes from'" (click)="openBreakdown('category',row.id,row.name)"><span class="row-main"><strong>{{row.name}}</strong><small>{{row.count===1?'1 expense':row.count+' expenses'}} · {{share(row.total)}}%</small><i class="total-bar" [style.width.%]="share(row.total)" aria-hidden="true"></i></span><span class="row-amount">{{row.total | currency:diary.data().settings.currency:'symbol':'1.0-2'}}</span></button>}</div>
     <h2 class="group-label totals-label">By relation</h2>
-    <div class="panel list-panel">@for(row of totals().byRelation;track row.id){<div class="row total-row"><span class="row-main"><strong>{{row.name}}</strong><small>{{row.count===1?'1 expense':row.count+' expenses'}} · {{share(row.total)}}%</small><i class="total-bar" [style.width.%]="share(row.total)" aria-hidden="true"></i></span><span class="row-amount">{{row.total | currency:diary.data().settings.currency:'symbol':'1.0-2'}}</span></div>}</div>
+    <div class="panel list-panel">@for(row of totals().byRelation;track row.id){<button class="row row-button total-row" [attr.aria-label]="row.name+', '+row.count+' expenses, see where it comes from'" (click)="openBreakdown('relation',row.id,row.name)"><span class="row-main"><strong>{{row.name}}</strong><small>{{row.count===1?'1 expense':row.count+' expenses'}} · {{share(row.total)}}%</small><i class="total-bar" [style.width.%]="share(row.total)" aria-hidden="true"></i></span><span class="row-amount">{{row.total | currency:diary.data().settings.currency:'symbol':'1.0-2'}}</span></button>}</div>
     <p class="group-note">An expense with people from two relations counts under both. Relation and category filters are not applied here.</p>
   }@else{<p class="calendar-note">No spends in this range.</p>}
 }@else{
@@ -61,5 +61,17 @@
       <div class="panel list-panel option-list" role="radiogroup" aria-label="Sort by">@for(s of sorts; track s.id){<button class="option-row" role="radio" [attr.aria-checked]="sort()===s.id" (click)="sort.set(s.id)">{{s.id==='visits' && mode()==='people'?'Most together':s.label}}@if(sort()===s.id){<app-icon name="check"/>}</button>}</div>}
     </div>
     <ng-template #footer><div class="sheet-actions"><button class="text-button" (click)="reset()">Reset</button><button class="primary" (click)="closeSheet()">Done</button></div></ng-template>
+  </p-drawer>
+}
+
+@if(detail(); as d){
+  <p-drawer [visible]="true" (visibleChange)="!$event && closeBreakdown()" position="bottom" styleClass="day-drawer" [modal]="true" [blockScroll]="false" [showCloseIcon]="false" [style]="{height:'auto', maxHeight:'85dvh'}" transitionOptions="0ms">
+    <ng-template #header><div class="drawer-heading"><span class="drag-handle"></span><div class="drawer-row"><div><h3 class="sheet-title">{{d.name}}</h3>@if(breakdown(); as b){<strong class="drawer-total">{{b.total | currency:diary.data().settings.currency:'symbol':'1.0-2'}}</strong>}</div><button class="icon-button" aria-label="Close" (click)="closeBreakdown()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="m4 4 8 8m0-8-8 8"/></svg></button></div></div></ng-template>
+    @if(breakdown(); as b){<div class="filter-sheet">
+      <h4 class="group-label">By store</h4>
+      <div class="panel list-panel">@for(s of b.byStore;track s.id){<div class="row total-row"><span class="entry-avatar" [style.background-color]="s.color" aria-hidden="true">{{s.name.charAt(0).toUpperCase()}}</span><span class="row-main"><strong>{{s.name}}</strong><small>{{s.count===1?'1 expense':s.count+' expenses'}} · {{b.total?(s.total/b.total*100).toFixed(0):0}}%</small><i class="total-bar" [style.width.%]="b.total?s.total/b.total*100:0" aria-hidden="true"></i></span><span class="row-amount">{{s.total | currency:diary.data().settings.currency:'symbol':'1.0-2'}}</span></div>}</div>
+      <h4 class="group-label">Expenses</h4>
+      <div class="panel list-panel">@for(e of b.entries;track e.id){<div class="row"><span class="row-main"><strong>{{e.storeName}}</strong><small>{{entryDate(e.date) | date:'EEE, d MMM'}}@if(e.items){ · {{e.items}}}</small></span><span class="row-amount">{{e.amount | currency:diary.data().settings.currency:'symbol':'1.0-2'}}</span></div>}</div>
+    </div>}
   </p-drawer>
 }

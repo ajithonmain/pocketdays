@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { loadSource } from './load-source.mjs';
-const {spendTotals}=await loadSource('totals');
+const {spendTotals,totalsBreakdown}=await loadSource('totals');
 const {applyDay,newDraft}=await loadSource('entries');
 const {setPersonRelation}=await loadSource('catalog');
 const {setStoreCategory}=await loadSource('categories');
@@ -35,4 +35,22 @@ test('totals follow the store category link',()=>{
   const d=sample();const tailor=d.stores.find(s=>s.name==='Tailor');
   const t=spendTotals(setStoreCategory(d,tailor.id,'food'),{period:'month',payer:'all'},anchor);
   assert.deepEqual(t.byCategory.map(r=>[r.id,r.total]),[['food',55]]);
+});
+
+test('breakdown lists spend per store and every expense behind a category total',()=>{
+  const d=sample();
+  const b=totalsBreakdown(d,{period:'month',payer:'all'},'category','food',anchor);
+  assert.equal(b.total,35);assert.equal(b.count,2);
+  assert.deepEqual(b.byStore.map(r=>[r.name,r.total,r.count]),[['Grocer',30,1],['Cafe',5,1]]);
+  assert.deepEqual(b.entries.map(e=>[e.storeName,e.amount]),[['Grocer',30],['Cafe',5]]);
+  assert.equal(b.byStore.reduce((s,r)=>s+r.total,0),b.total);
+});
+test('relation breakdown matches its row, follows filters and is newest first',()=>{
+  const d=sample();
+  const row=spendTotals(d,{period:'all',payer:'all'}).byRelation.find(r=>r.id==='family');
+  const b=totalsBreakdown(d,{period:'all',payer:'all'},'relation','family');
+  assert.equal(b.total,row.total);assert.equal(b.count,row.count);
+  assert.deepEqual(b.entries.map(e=>e.date),['2026-11-03','2026-11-03']);
+  assert.equal(totalsBreakdown(d,{period:'month',payer:'all',person:'Raj'},'relation','family',anchor).total,20);
+  assert.equal(totalsBreakdown(d,{period:'month',payer:'all'},'category','bills',anchor).count,0);
 });

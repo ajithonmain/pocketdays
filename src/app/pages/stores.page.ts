@@ -7,7 +7,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { DrawerModule } from 'primeng/drawer';
 import { DiaryService } from '../core/diary.service';
 import { Payer, Sort, storeRows } from '../core/store-stats';
-import { spendTotals } from '../core/totals';
+import { spendTotals, totalsBreakdown, TotalsGroup } from '../core/totals';
 import { IconComponent } from '../shared/icon.component';
 import { SpendFilterService } from '../core/spend-filter.service';
 import { filterDiary } from '../core/spend-filters';
@@ -29,6 +29,11 @@ export class StoresPage {
   readonly sorts: { id: Sort; label: string }[] = [{ id: 'spent', label: 'Most spent' }, { id: 'visits', label: 'Most visits' }, { id: 'recent', label: 'Latest' }, { id: 'name', label: 'A to Z' }];
 
   readonly totals = computed(() => spendTotals(this.diary.data(), { period: this.period(), payer: this.payer(), person: this.person() }, this.anchor()));
+  readonly detail = signal<{ group: TotalsGroup; id: string; name: string } | null>(null);
+  readonly breakdown = computed(() => { const d = this.detail(); return d ? totalsBreakdown(this.diary.data(), { period: this.period(), payer: this.payer(), person: this.person() }, d.group, d.id, this.anchor()) : null; });
+  openBreakdown(group: TotalsGroup, id: string, name: string) { this.detail.set({ group, id, name }); }
+  closeBreakdown() { this.dismiss(() => this.detail.set(null)); }
+  entryDate(value: string) { return new Date(value + 'T12:00:00'); }
   share(amount: number) { const t = this.totals().total; return t ? Math.round(amount / t * 100) : 0; }
   modeIndex() { return this.mode() === 'stores' ? 0 : this.mode() === 'people' ? 1 : 2; }
   readonly rows = computed(() => (this.mode()==='stores'?storeRows:personRows)(filterDiary(this.diary.data(), this.spend.filter()), { period: this.period(), payer: this.payer(), sort: this.sort(), query: this.query(), person: this.person() }, this.anchor()));
