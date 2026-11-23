@@ -33,7 +33,6 @@ export class StoresPage {
   readonly breakdown = computed(() => { const d = this.detail(); return d ? totalsBreakdown(this.diary.data(), { period: this.period(), payer: this.payer(), person: this.person() }, d.group, d.id, this.anchor()) : null; });
   openBreakdown(group: TotalsGroup, id: string, name: string) { this.detail.set({ group, id, name }); }
   closeBreakdown() { this.dismiss(() => this.detail.set(null)); }
-  entryDate(value: string) { return new Date(value + 'T12:00:00'); }
   share(amount: number) { const t = this.totals().total; return t ? Math.round(amount / t * 100) : 0; }
   modeIndex() { return this.mode() === 'stores' ? 0 : this.mode() === 'people' ? 1 : 2; }
   readonly rows = computed(() => (this.mode()==='stores'?storeRows:personRows)(filterDiary(this.diary.data(), this.spend.filter()), { period: this.period(), payer: this.payer(), sort: this.sort(), query: this.query(), person: this.person() }, this.anchor()));

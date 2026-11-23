@@ -20,10 +20,10 @@ test('totals group by category for the month and sort by amount',()=>{
   assert.deepEqual(t.byCategory.map(r=>[r.id,r.total,r.count]),[['food',35,2],['clothing',20,1]]);
   assert.equal(spendTotals(sample(),{period:'all',payer:'all'}).total,155);
 });
-test('relation totals count a mixed expense under each relation and solo spends under others',()=>{
+test('relation totals count a mixed expense under each relation and solo spends under Just me',()=>{
   const t=spendTotals(sample(),{period:'month',payer:'all'},anchor);
   const by=Object.fromEntries(t.byRelation.map(r=>[r.id,r.total]));
-  assert.deepEqual(by,{family:50,friends:20,others:5});
+  assert.deepEqual(by,{family:50,friends:20,none:5});
 });
 test('payer and person filters apply; empty periods give no rows',()=>{
   const d=sample();
@@ -42,15 +42,13 @@ test('breakdown lists spend per store and every expense behind a category total'
   const b=totalsBreakdown(d,{period:'month',payer:'all'},'category','food',anchor);
   assert.equal(b.total,35);assert.equal(b.count,2);
   assert.deepEqual(b.byStore.map(r=>[r.name,r.total,r.count]),[['Grocer',30,1],['Cafe',5,1]]);
-  assert.deepEqual(b.entries.map(e=>[e.storeName,e.amount]),[['Grocer',30],['Cafe',5]]);
   assert.equal(b.byStore.reduce((s,r)=>s+r.total,0),b.total);
 });
-test('relation breakdown matches its row, follows filters and is newest first',()=>{
+test('relation breakdown matches its row and follows filters',()=>{
   const d=sample();
   const row=spendTotals(d,{period:'all',payer:'all'}).byRelation.find(r=>r.id==='family');
   const b=totalsBreakdown(d,{period:'all',payer:'all'},'relation','family');
   assert.equal(b.total,row.total);assert.equal(b.count,row.count);
-  assert.deepEqual(b.entries.map(e=>e.date),['2026-11-03','2026-11-03']);
   assert.equal(totalsBreakdown(d,{period:'month',payer:'all',person:'Raj'},'relation','family',anchor).total,20);
   assert.equal(totalsBreakdown(d,{period:'month',payer:'all'},'category','bills',anchor).count,0);
 });

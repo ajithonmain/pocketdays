@@ -1,8 +1,8 @@
-import { DiaryDocument, EntryDocument, Relation } from './models';
+import { DiaryDocument, EntryDocument } from './models';
 import { categoryName, entryCategoryId } from './categories';
 import { inPeriod, involves, Payer, Period } from './store-stats';
 import { displayEntry, personByName } from './entry-display';
-import { entryRelations, RELATIONS } from './spend-filters';
+import { entryRelations, FILTER_RELATIONS, RelationKey } from './spend-filters';
 import { colorForStore } from './store-colors';
 
 export interface TotalRow { id: string; name: string; total: number; count: number; }
@@ -10,8 +10,7 @@ export interface Totals { total: number; count: number; byCategory: TotalRow[]; 
 export interface TotalsFilters { period: Period; payer: Payer; person?: string; }
 export type TotalsGroup = 'category' | 'relation';
 export interface BreakdownStore extends TotalRow { color: string; }
-export interface BreakdownEntry { id: string; date: string; storeName: string; color: string; amount: number; items: string; }
-export interface Breakdown { total: number; count: number; byStore: BreakdownStore[]; entries: BreakdownEntry[]; }
+export interface Breakdown { total: number; count: number; byStore: BreakdownStore[]; }
 
 const money = (n: number) => Math.round(n * 100) / 100;
 const rank = <T extends { total: number; name: string }>(rows: Iterable<T>): T[] =>
@@ -39,7 +38,7 @@ function* inRange(data: DiaryDocument, filters: TotalsFilters, anchor: Date): Ge
  */
 export function spendTotals(data: DiaryDocument, filters: TotalsFilters, anchor = new Date()): Totals {
   const categories = new Map<string, TotalRow>();
-  const relations = new Map<Relation, TotalRow>();
+  const relations = new Map<RelationKey, TotalRow>();
   let total = 0, count = 0;
   for (const { raw, entry } of inRange(data, filters, anchor)) {
     const amount = entry.amount || 0;
@@ -48,20 +47,19 @@ export function spendTotals(data: DiaryDocument, filters: TotalsFilters, anchor 
     const row = categories.get(id) ?? { id, name: categoryName(data, raw), total: 0, count: 0 };
     row.total += amount; row.count += 1; categories.set(id, row);
     for (const r of entryRelations(data, raw)) {
-      const rel = relations.get(r) ?? { id: r, name: RELATIONS.find(x => x.id === r)!.label, total: 0, count: 0 };
+      const rel = relations.get(r) ?? { id: r, name: FILTER_RELATIONS.find(x => x.id === r)!.label, total: 0, count: 0 };
       rel.total += amount; rel.count += 1; relations.set(r, rel);
     }
   }
   return { total: money(total), count, byCategory: rank(categories.values()), byRelation: rank(relations.values()) };
 }
 
-/** How one category or relation total is made up: spend per store and every expense behind it, newest first. */
+/** How one category or relation total is made up: spend per store. */
 export function totalsBreakdown(data: DiaryDocument, filters: TotalsFilters, group: TotalsGroup, id: string, anchor = new Date()): Breakdown {
   const stores = new Map<string, BreakdownStore>();
-  const entries: BreakdownEntry[] = [];
-  let total = 0;
-  for (const { date, raw, entry } of inRange(data, filters, anchor)) {
-    const match = group === 'category' ? entryCategoryId(data, raw) === id : entryRelations(data, raw).has(id as Relation);
+  let total = 0, count = 0;
+  for (const { raw, entry } of inRange(data, filters, anchor)) {
+    const match = group === 'category' ? entryCategoryId(data, raw) === id : entryRelations(data, raw).has(id as RelationKey);
     if (!match) continue;
     const amount = entry.amount || 0;
     const key = entry.storeId || entry.storeName;
@@ -69,9 +67,7 @@ export function totalsBreakdown(data: DiaryDocument, filters: TotalsFilters, gro
     const color = colorForStore(store ?? { id: key, color: entry.storeColor });
     const row = stores.get(key) ?? { id: key, name: entry.storeName, color, total: 0, count: 0 };
     row.total += amount; row.count += 1; stores.set(key, row);
-    total += amount;
-    entries.push({ id: entry.id, date, storeName: entry.storeName, color, amount: money(amount), items: entry.items?.trim() ?? '' });
+    total += amount; count += 1;
   }
-  entries.sort((a, b) => b.date.localeCompare(a.date));
-  return { total: money(total), count: entries.length, byStore: rank(stores.values()), entries };
+  return { total: money(total), count, byStore: rank(stores.values()) };
 }
