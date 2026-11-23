@@ -3,10 +3,7 @@ import { entryCategoryId } from './categories';
 import { personByName } from './entry-display';
 
 export const RELATIONS: { id: Relation; label: string }[] = [{ id: 'family', label: 'Family' }, { id: 'friends', label: 'Friends' }, { id: 'others', label: 'Others' }];
-/** Relations a filter or total can group by: the three saved ones plus 'none' for expenses with nobody else involved. */
-export type RelationKey = Relation | 'none';
-export const FILTER_RELATIONS: { id: RelationKey; label: string }[] = [...RELATIONS, { id: 'none', label: 'Just me' }];
-export interface SpendFilter { relation: RelationKey | ''; category: string; }
+export interface SpendFilter { relation: Relation | ''; category: string; }
 export const noSpendFilter = (): SpendFilter => ({ relation: '', category: '' });
 export const spendFilterActive = (f: SpendFilter) => !!f.relation || !!f.category;
 export const nextRelation = (r: Relation | undefined): Relation => r === 'family' ? 'friends' : r === 'friends' ? 'others' : 'family';
@@ -14,10 +11,10 @@ export const relationLabel = (r: Relation | undefined) => RELATIONS.find(x => x.
 
 /**
  * Relations that apply to an entry: those of everyone with you and of whoever paid.
- * An entry with nobody involved counts as 'none' (Just me); people without a relation count as Others.
+ * An entry with nobody involved, or only people without a relation, counts as Others.
  */
-export function entryRelations(data: DiaryDocument, entry: EntryDocument): Set<RelationKey> {
-  const found = new Set<RelationKey>();
+export function entryRelations(data: DiaryDocument, entry: EntryDocument): Set<Relation> {
+  const found = new Set<Relation>();
   entry.personNames.forEach((name, i) => {
     const person = entry.personIds[i] ? data.people.find(p => p.id === entry.personIds[i]) : personByName(data, name);
     found.add(person?.relation ?? 'others');
@@ -26,7 +23,7 @@ export function entryRelations(data: DiaryDocument, entry: EntryDocument): Set<R
     const payer = entry.paidById ? data.people.find(p => p.id === entry.paidById) : personByName(data, entry.paidByName ?? '');
     found.add(payer?.relation ?? 'others');
   }
-  if (!found.size) found.add('none');
+  if (!found.size) found.add('others');
   return found;
 }
 

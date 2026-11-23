@@ -20,10 +20,10 @@ test('totals group by category for the month and sort by amount',()=>{
   assert.deepEqual(t.byCategory.map(r=>[r.id,r.total,r.count]),[['food',35,2],['clothing',20,1]]);
   assert.equal(spendTotals(sample(),{period:'all',payer:'all'}).total,155);
 });
-test('relation totals count a mixed expense under each relation and solo spends under Just me',()=>{
+test('relation totals count a mixed expense under each relation and solo spends under Others',()=>{
   const t=spendTotals(sample(),{period:'month',payer:'all'},anchor);
   const by=Object.fromEntries(t.byRelation.map(r=>[r.id,r.total]));
-  assert.deepEqual(by,{family:50,friends:20,none:5});
+  assert.deepEqual(by,{family:50,friends:20,others:5});
 });
 test('payer and person filters apply; empty periods give no rows',()=>{
   const d=sample();

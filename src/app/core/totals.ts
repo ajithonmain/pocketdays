@@ -1,8 +1,8 @@
-import { DiaryDocument, EntryDocument } from './models';
+import { DiaryDocument, EntryDocument, Relation } from './models';
 import { categoryName, entryCategoryId } from './categories';
 import { inPeriod, involves, Payer, Period } from './store-stats';
 import { displayEntry, personByName } from './entry-display';
-import { entryRelations, FILTER_RELATIONS, RelationKey } from './spend-filters';
+import { entryRelations, RELATIONS } from './spend-filters';
 import { colorForStore } from './store-colors';
 
 export interface TotalRow { id: string; name: string; total: number; count: number; }
@@ -38,7 +38,7 @@ function* inRange(data: DiaryDocument, filters: TotalsFilters, anchor: Date): Ge
  */
 export function spendTotals(data: DiaryDocument, filters: TotalsFilters, anchor = new Date()): Totals {
   const categories = new Map<string, TotalRow>();
-  const relations = new Map<RelationKey, TotalRow>();
+  const relations = new Map<Relation, TotalRow>();
   let total = 0, count = 0;
   for (const { raw, entry } of inRange(data, filters, anchor)) {
     const amount = entry.amount || 0;
@@ -47,7 +47,7 @@ export function spendTotals(data: DiaryDocument, filters: TotalsFilters, anchor 
     const row = categories.get(id) ?? { id, name: categoryName(data, raw), total: 0, count: 0 };
     row.total += amount; row.count += 1; categories.set(id, row);
     for (const r of entryRelations(data, raw)) {
-      const rel = relations.get(r) ?? { id: r, name: FILTER_RELATIONS.find(x => x.id === r)!.label, total: 0, count: 0 };
+      const rel = relations.get(r) ?? { id: r, name: RELATIONS.find(x => x.id === r)!.label, total: 0, count: 0 };
       rel.total += amount; rel.count += 1; relations.set(r, rel);
     }
   }
@@ -59,7 +59,7 @@ export function totalsBreakdown(data: DiaryDocument, filters: TotalsFilters, gro
   const stores = new Map<string, BreakdownStore>();
   let total = 0, count = 0;
   for (const { raw, entry } of inRange(data, filters, anchor)) {
-    const match = group === 'category' ? entryCategoryId(data, raw) === id : entryRelations(data, raw).has(id as RelationKey);
+    const match = group === 'category' ? entryCategoryId(data, raw) === id : entryRelations(data, raw).has(id as Relation);
     if (!match) continue;
     const amount = entry.amount || 0;
     const key = entry.storeId || entry.storeName;

@@ -11,7 +11,7 @@ import { displayEntry } from '../core/entry-display';
 import { SpendFilterService } from '../core/spend-filter.service';
 import { filterDiary } from '../core/spend-filters';
 import { categoriesOf } from '../core/categories';
-import { FILTER_RELATIONS } from '../core/spend-filters';
+import { RELATIONS } from '../core/spend-filters';
 export const dateKey=localDateKey;
 @Component({selector:'app-calendar',imports:[CurrencyPipe,DatePipe,IconComponent,RouterLink],templateUrl:'./calendar.component.html'})
 export class CalendarComponent {
@@ -20,7 +20,7 @@ export class CalendarComponent {
   readonly searchField=viewChild<ElementRef<HTMLInputElement>>('searchField');readonly searchButton=viewChild<ElementRef<HTMLButtonElement>>('searchButton');
   readonly filters=inject(SpendFilterService);
   /** The diary as the filters show it. Editing always uses the full diary. */
-  readonly menuOpen=signal(false);readonly relations=FILTER_RELATIONS;
+  readonly menuOpen=signal(false);readonly relations=RELATIONS;
   readonly categories=computed(()=>categoriesOf(this.diary.data()));
   toggleMenu(){this.menuOpen.update(v=>!v);}
   closeMenu(){this.menuOpen.set(false);}

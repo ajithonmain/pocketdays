@@ -16,12 +16,11 @@ function sample(){
   d=setPersonRelation(d,d.people.find(p=>p.name==='Raj').id,'friends');
   return d;
 }
-test('relation filter matches companions and payer; solo spends count as just me',()=>{
+test('relation filter matches companions and payer; solo spends count as others',()=>{
   const d=sample();
   assert.equal(filterDiary(d,{relation:'family',category:''}).days[0].total,30);
   assert.equal(filterDiary(d,{relation:'friends',category:''}).days[0].total,20);
-  assert.equal(filterDiary(d,{relation:'none',category:''}).days[0].total,5);
-  assert.equal(filterDiary(d,{relation:'others',category:''}).days.length,0);
+  assert.equal(filterDiary(d,{relation:'others',category:''}).days[0].total,5);
   const payer=applyDay(d,'2026-11-02',[draft({paidByMe:false,paidByName:'Mum',amount:7})]);
   assert.deepEqual([...entryRelations(payer,payer.days.at(-1).entries[0])],['family']);
 });
