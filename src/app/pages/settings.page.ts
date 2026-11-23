@@ -6,6 +6,7 @@ import { IconComponent } from '../shared/icon.component';
 import { Component, inject, signal } from '@angular/core';
 import { DrawerModule } from 'primeng/drawer';
 import { categoriesOf } from '../core/categories';
+import { relationsOf } from '../core/relations';
 import { DiaryService } from '../core/diary.service';
 import { BACKUP_LIMIT_BYTES, backupFileName, createBackup, parseBackup, summarize } from '../core/backup';
 import { InstallService } from '../core/install.service';
@@ -14,13 +15,14 @@ import { normalizePairCode, PAIR_CODE_TTL_SECONDS } from '../core/pairing';
 @Component({standalone:true,imports:[CatalogSettingsComponent,DrawerModule,IconComponent],templateUrl:'./settings.page.html'})
 export class SettingsPage {
   readonly theme=inject(ThemeService);readonly dialogs=inject(AppDialogService);readonly diary=inject(DiaryService);readonly installer=inject(InstallService);readonly updater=inject(UpdateService);readonly message=signal('');
-  readonly managing=signal<CatalogKind|'categories'|''>('');readonly backupMessage=signal('');readonly backupError=signal('');
+  readonly managing=signal<CatalogKind|'categories'|'relations'|''>('');readonly backupMessage=signal('');readonly backupError=signal('');
   readonly linking=signal<''|'show'|'enter'>('');readonly pairCode=signal('');readonly pairError=signal('');readonly pairBusy=signal(false);readonly codeInput=signal('');
   readonly pairMinutes=PAIR_CODE_TTL_SECONDS/60;
   private timer?:ReturnType<typeof setTimeout>;private linkTimer?:ReturnType<typeof setTimeout>;
   themeIndex(){return ['light','dark','system'].indexOf(this.theme.choice());}
+  relationCount(){return relationsOf(this.diary.data()).length;}
   categoryCount(){return categoriesOf(this.diary.data()).length;}
-  open(kind:CatalogKind|'categories'){this.managing.set(kind);}
+  open(kind:CatalogKind|'categories'|'relations'){this.managing.set(kind);}
   close(){document.body.classList.add('sheet-closing');clearTimeout(this.timer);this.timer=setTimeout(()=>{this.managing.set('');document.body.classList.remove('sheet-closing');},300);}
   async showCode(){
     this.linking.set('show');this.pairCode.set('');this.pairError.set('');this.pairBusy.set(true);

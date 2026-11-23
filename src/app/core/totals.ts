@@ -2,7 +2,8 @@ import { DiaryDocument, EntryDocument, Relation } from './models';
 import { categoryName, entryCategoryId } from './categories';
 import { inPeriod, involves, Payer, Period } from './store-stats';
 import { displayEntry, personByName } from './entry-display';
-import { entryRelations, RELATIONS } from './spend-filters';
+import { entryRelations } from './spend-filters';
+import { relationName } from './relations';
 import { colorForStore } from './store-colors';
 
 export interface TotalRow { id: string; name: string; total: number; count: number; }
@@ -47,7 +48,7 @@ export function spendTotals(data: DiaryDocument, filters: TotalsFilters, anchor 
     const row = categories.get(id) ?? { id, name: categoryName(data, raw), total: 0, count: 0 };
     row.total += amount; row.count += 1; categories.set(id, row);
     for (const r of entryRelations(data, raw)) {
-      const rel = relations.get(r) ?? { id: r, name: RELATIONS.find(x => x.id === r)!.label, total: 0, count: 0 };
+      const rel = relations.get(r) ?? { id: r, name: relationName(data, r), total: 0, count: 0 };
       rel.total += amount; rel.count += 1; relations.set(r, rel);
     }
   }
@@ -59,7 +60,7 @@ export function totalsBreakdown(data: DiaryDocument, filters: TotalsFilters, gro
   const stores = new Map<string, BreakdownStore>();
   let total = 0, count = 0;
   for (const { raw, entry } of inRange(data, filters, anchor)) {
-    const match = group === 'category' ? entryCategoryId(data, raw) === id : entryRelations(data, raw).has(id as Relation);
+    const match = group === 'category' ? entryCategoryId(data, raw) === id : entryRelations(data, raw).has(id);
     if (!match) continue;
     const amount = entry.amount || 0;
     const key = entry.storeId || entry.storeName;

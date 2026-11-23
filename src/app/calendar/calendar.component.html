@@ -7,7 +7,7 @@
       <p class="menu-label">Relation</p>
       <div class="menu-pills" role="group" aria-label="Relation">
         <button class="filter-chip" [attr.aria-pressed]="!filters.relation()" (click)="filters.relation.set('')">All</button>
-        @for(r of relations;track r.id){<button class="filter-chip" [attr.aria-pressed]="filters.relation()===r.id" (click)="filters.relation.set(r.id)">{{r.label}}</button>}
+        @for(r of relations();track r.id){<button class="filter-chip" [attr.aria-pressed]="filters.relation()===r.id" (click)="filters.relation.set(r.id)">{{r.name}}</button>}
       </div>
       <p class="menu-label">Category</p>
       <div class="menu-pills menu-scroll" role="group" aria-label="Category">

@@ -12,6 +12,10 @@
     @if(!entry().paidByMe){<label [for]="'payer-'+entry().id">Who paid</label><input pInputText [id]="'payer-'+entry().id" [attr.list]="'payers-'+entry().id" autocomplete="off" [ngModel]="entry().paidByName" (ngModelChange)="patch({paidByName:$event})"><datalist [id]="'payers-'+entry().id">@for(p of people();track p.id){<option [value]="p.name"></option>}</datalist><label class="check-row"><input type="checkbox" [ngModel]="entry().iOweThem" (ngModelChange)="patch({iOweThem:$event})">I owe them</label>}
     <label>People with me <span class="muted">Optional</span></label>
     <app-people-field [selected]="entry().personNames" [options]="peopleNames()" [label]="'People with me for '+(entry().storeName || 'expense')" (changed)="patch({personNames:$event})"/>
+    @if(solo()){<span class="field-label" [id]="'rel-label-'+entry().id">Relation <span class="muted">Optional</span></span><div class="chip-wrap" role="group" [attr.aria-labelledby]="'rel-label-'+entry().id">
+      <button type="button" class="filter-chip" [attr.aria-pressed]="!entry().relation" (click)="patch({relation:undefined})">Not set</button>
+      @for(r of relations();track r.id){<button type="button" class="filter-chip" [attr.aria-pressed]="entry().relation===r.id" (click)="patch({relation:r.id})">{{r.name}}</button>}
+    </div>}
   </div>}
   @if(error()){<p class="field-error" role="alert">{{error()}}</p>}
 </section>

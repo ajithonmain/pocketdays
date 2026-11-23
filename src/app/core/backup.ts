@@ -1,5 +1,5 @@
 import { displayEntry } from './entry-display';
-import { CategoryDocument, DayDocument, DiaryDocument, EntryDocument, PersonDocument, Relation, SettingsDocument, StoreDocument } from './models';
+import { CategoryDocument, DayDocument, DiaryDocument, EntryDocument, PersonDocument, RelationDocument, SettingsDocument, StoreDocument } from './models';
 
 export const BACKUP_LIMIT_BYTES = 8 * 1024 * 1024;
 export interface BackupFile { app: 'PocketDays'; kind: 'backup'; version: 1; exportedAt: string; diary: DiaryDocument; }
@@ -43,11 +43,12 @@ function parseStore(v: unknown): StoreDocument {
 function parsePerson(v: unknown): PersonDocument {
   if (!isRecord(v)) return fail('A person is not valid.');
   const person: PersonDocument = { id: text(v['id'], 'A person id', 64), name: text(v['name'], 'A person name', 80), createdAt: text(v['createdAt'], 'A person date', 40), ...(v['previousNames'] === undefined ? {} : { previousNames: list(v['previousNames'], 'Previous names', 100).map(n => text(n, 'A previous name', 80)) }) };
-  if (v['relation'] !== undefined) {
-    if (v['relation'] !== 'family' && v['relation'] !== 'friends' && v['relation'] !== 'others') return fail('A person relation is not valid.');
-    person.relation = v['relation'] as Relation;
-  }
+  if (v['relation'] !== undefined) person.relation = text(v['relation'], 'A person relation', 64);
   return person;
+}
+function parseRelation(v: unknown): RelationDocument {
+  if (!isRecord(v)) return fail('A relation is not valid.');
+  return { id: text(v['id'], 'A relation id', 64), name: text(v['name'], 'A relation name', 40), createdAt: text(v['createdAt'], 'A relation date', 40) };
 }
 function parseCategory(v: unknown): CategoryDocument {
   if (!isRecord(v)) return fail('A category is not valid.');
@@ -69,6 +70,7 @@ function parseEntry(v: unknown): EntryDocument {
     createdAt: text(v['createdAt'], 'An expense date', 40), updatedAt: text(v['updatedAt'], 'An expense date', 40),
   };
   if (v['paidById'] !== undefined) { const id=text(v['paidById'], 'A payer id', 64); if (!paidByMe) entry.paidById=id; }
+  if (v['relation'] !== undefined) entry.relation = text(v['relation'], 'An expense relation', 64);
   if (v['categoryId'] !== undefined) {
     entry.categoryId = text(v['categoryId'], 'A category id', 64);
     if (v['categoryName'] !== undefined) entry.categoryName = text(v['categoryName'], 'A category name', 40, false);
@@ -109,6 +111,7 @@ export function parseBackup(raw: string): { diary: DiaryDocument; summary: Backu
     return { date, entries, entryCount: entries.length, total: Math.round(entries.reduce((s, e) => s + e.amount, 0) * 100) / 100, updatedAt: typeof item['updatedAt'] === 'string' ? item['updatedAt'].slice(0, 40) : new Date(0).toISOString() };
   }).filter(day => day.entries.length > 0).sort((a, b) => a.date.localeCompare(b.date));
   const categories = source['categories'] === undefined ? undefined : list(source['categories'], 'Categories', 40).map(parseCategory);
-  const diary: DiaryDocument = { schemaVersion: 1, stores, people, ...(categories ? { categories } : {}), days, settings: parseSettings(source['settings']) };
+  const relations = source['relations'] === undefined ? undefined : list(source['relations'], 'Relations', 20).map(parseRelation);
+  const diary: DiaryDocument = { schemaVersion: 1, stores, people, ...(categories ? { categories } : {}), ...(relations ? { relations } : {}), days, settings: parseSettings(source['settings']) };
   return { diary, summary: summarize(diary, typeof json['exportedAt'] === 'string' ? json['exportedAt'] : '') };
 }
